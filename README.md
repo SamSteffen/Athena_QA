@@ -13,6 +13,8 @@ It's worth saying at the outset that there are obviously better tools for perfor
 ### Sample Data
 For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 28 columns and 953 rows.
 
+![spotify data png](/Assets/images/Kaggle_data_screenshot_1.png)
+
 # Step 1: Upload Your Raw Data into AWS S3
 Hopefully if you're using AWS Athena, you're familiar with AWS's Simple Storage Service, or S3, as it's known. (If you're unfamiliar with S3, it's essentially Amazon's object storage service that offers industry-leading scalability, data availability, security, and performance. To read more about S3, check out the [AWS S3 documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html).)
 
@@ -26,7 +28,7 @@ To query data in Amazon Athena, you'll first want to upload your raw data files 
 
 Once you've created your S3 bucket and folder, your uploaded data should look something like this:
 
-<insert pic here of data file in S3 folder and S3 bucket>
+>>insert pic here of data file in S3 folder and S3 bucket
 
 # Step 2: Create a Table for Your Data in AWS Athena
 Once your data is uploaded to S3, you can pull it into Athena with a CREATE TABLE script. 
@@ -35,15 +37,16 @@ Note that several of the column headers in our csv contain special characters (l
 
 When we create a table in Athena from S3, we're calling in the data, but we have the opportunity to rename the columns whatever we want. Athena's schema maps to column location and uses the delimiter to distinguish where one column ends and another begins. In most cases, if we'd like to be consistent with the data file, we can use the same names for the columns as have been provided. Because we have special characters, I'm altering the following column names in the create script:
 
-**ORIGINAL COLUMN NAME            NEW COLUMN NAME**
-- artist(s)_name         -->      artist_name
-- danceability_%         -->      danceability_percent
-- valence_%              -->      valendce_percent
-- energy_% 	             -->      energy_percent
-- acousticness_% 	     -->      acousticness_percent
-- instrumentalness_% 	 -->      instrumentalness_percent
-- liveness_% 	         -->      liveness_percent
-- speechiness_%          -->      speechiness_percent
+|**ORIGINAL COLUMN NAME  | NEW COLUMN NAME**          |
+|------------------------|----------------------------|
+| artist(s)_name         | artist_name                |
+| danceability_%         | danceability_percent       |
+| valence_%              | valendce_percent           |
+| energy_% 	             | energy_percent             |
+| acousticness_% 	     | acousticness_percent       |  
+| instrumentalness_% 	 | instrumentalness_percent   |  
+| liveness_% 	         | liveness_percent           |  
+| speechiness_%          | speechiness_percent        |  
 
 Open your query editor in Athena and create your table using the following format:
 
