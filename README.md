@@ -13,17 +13,17 @@ It's worth saying at the outset that there are obviously better tools for perfor
 ### The Process
 While this tutorial promises to leave you with a query that will QA an entire dataset, the assumption is that you'll already be familiar with Athena and have your data stored there. Becuase of this, there are a few additional setup steps involved. From start to finish the procedure should look something as follows:
 
-- Step 1 : Upload Your Raw Data into AWS S3
-- Step 2 : Create a Table for your Raw Data in AWS Athena
-- Step 3 : Write an Athean-compatible QA Query That Returns a Table in Which Each Row Corresponds To and Provides the Following Information About Each Column of Your Raw Dataset:
-    a. The name of the table in the Athena database
-    b. The name of the column being QA'd
-    c. The ordinal position in the table of the column being QA'd
-    d. The datatype of the data in the column being QA'd
-    e. A count of the null values in the column
-    f. A count of the non-null values in the column
-    g. A count of the distinct values in the column
-    h. 
+- **Step 1** : Upload Your Raw Data into AWS S3
+- **Step 2** : Create a Table for Your Raw Data in AWS Athena
+- **Step 3** : Write an Athean-compatible QA Query That Returns a Table in Which Each Row Corresponds To and Provides the Following Information About Each Column of Your Raw Dataset:
+    - The name of the table in the Athena database
+    - The name of the column being QA'd
+    - The ordinal position in the table of the column being QA'd
+    - The datatype of the data in the column being QA'd
+    - A count of the null values in the column
+    - A count of the non-null values in the column
+    - A count of the distinct values in the column
+    - 
 
 ### Sample Data
 For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 28 columns and 953 rows.
