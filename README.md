@@ -172,19 +172,21 @@ Once you've created the table, you can view the first ten rows of data by runnin
 
 ![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
-My recommendation from here would be to identify a column that appears to contain mostly *numeric* data(In our example dataset, 'column3' certainly looks promising). Because you've called in all the columns as strings (synonymous with varchars in Athena) you can then order the query by that column <ins>in reverse order</ins>. Because Athena processes numbers before letters when given string datat, the following query should reveal the column headers contained within the dataset (if there are any). 
+My recommendation from here would be to identify a column that appears to contain mostly *numeric* data(In our example dataset, 'column3' certainly looks promising). Because you've called in all the columns as strings (synonymous with varchars in Athena) you can then order the query by that column <ins>in reverse order</ins>. Because Athena processes numbers before letters when given string data, the following query should reveal the column headers contained within the dataset (if there are any). 
 
-```select column3 from top_spotify_songs_2023_table limit 10```
+```SELECT * from top_spotify_songs_2023_table ORDER BY column3 DESC limit 10```
 
 ![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
-Once you can view the column headers and confirm that you've arrived at the end of your data (because you are seeing null or unnamed columns), you can modify your ```CREATE TABLE IF NOT EXISTS``` script using the appropriate column names. Once your column names are updated, you can also add the ```'skip.header.line.count' = '1'``` parameter back to the ```TBLPROPERTIES``` definition. Drop the 'top_spotify_songs_2023_table' by running the following:
+Once you can view the column headers and confirm that you've arrived at the end of your data (because you are seeing null or unnamed columns), you can modify your ```CREATE TABLE IF NOT EXISTS``` script using the appropriate column names. 
+
+Next, once your column names are updated, you can also add the ```'skip.header.line.count' = '1'``` parameter back to the ```TBLPROPERTIES``` definition. 
+
+Drop the 'top_spotify_songs_2023_table' by running the following:
 
 ```DROP TABLE IF EXISTS top_spotify_songs_2023_table```
 
 Finally, recreate 'top_spotify_songs_2023_table' using the updated script.
-
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
 # Step 3: Write an Athean-compatible QA Query That Returns a Table in Which Each Row Corresponds To and Provides Helpful Information About Each Column of Your Raw Dataset
 Now for the fun part. Let's construct a QA query that will do all your QA work for you!
