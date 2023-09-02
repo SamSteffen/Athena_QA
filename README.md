@@ -123,7 +123,7 @@ TBLPROPERTIES ('classification' = 'csv',
 > HEADS UP: There may be instances when you're working in S3 and Athena when your data file is too large to open using S3 Select and may even be too large to safely download and open in any text editor. What to do? How are you supposed to retrieve column names to create a table in Athena if you can't see the data you're working with?
 
 ### How To Retrieve Column Names From a Dataset Stored in S3 That's Too Large to Download or Open, Using AWS Athena
-A somewhat tedious (but useful, nonetheless) workaround to this problem involves creating a table using the format described above, but using placeholder names for the column headers and just taking a blind guess at how many columns you're likely to have. For instance, if the csv we're using in this example contained 17 million rows of data, it would probably be too large for us to open and view in excel or any text editor. But&#151we could create a table in which we retain the column headers provided by the data file. We do this by omitting from the ```TBLPROPERTIES``` definition the parameter ```'skip.header.line.count' = '1'```. We could then run the following script:
+A somewhat tedious (but useful, nonetheless) workaround to this problem involves creating a table using the format described above, but using placeholder names for the column headers and just taking a blind guess at how many columns you're likely to have. For instance, if the csv we're using in this example contained 17 million rows of data, it would probably be too large for us to open and view in excel or any text editor. But&mdash;we could create a table in which we retain the column headers provided by the data file. We do this by omitting from the ```TBLPROPERTIES``` definition the parameter ```'skip.header.line.count' = '1'```. We could then run the following script:
 
 ```
 CREATE TABLE IF NOT EXISTS top_spotify_songs_2023_table (
@@ -164,7 +164,7 @@ STORE AS TEXTFILE
 LOCATION 's3://MyUniqueBucket_01/TopSpotifySongsFolder/'
 TBLPROPERTIES ('classification' = 'csv');
 ```
-Note that the above script just uses 'columnX' for the name, and contains more columns than our known dataset. That's okay! In fact, if it's your first time creating a table from a dataset you've never seen and you don't know how many columns there are, it's better to try creating and recreating the table until you can confirm that you've reached the 'end' of the dataset&#151that is, until your data starts showing columns that are entirely null. 
+Note that the above script just uses 'columnX' for the name, and contains more columns than our known dataset. That's okay! In fact, if it's your first time creating a table from a dataset you've never seen and you don't know how many columns there are, it's better to try creating and recreating the table until you can confirm that you've reached the 'end' of the dataset&mdash;that is, until your data starts showing columns that are entirely null. 
 
 Once you've created the table, you can view the first ten rows of data by running the following:
 
@@ -187,4 +187,100 @@ Finally, recreate 'top_spotify_songs_2023_table' using the updated script.
 ![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
 # Step 3: Write an Athean-compatible QA Query That Returns a Table in Which Each Row Corresponds To and Provides Helpful Information About Each Column of Your Raw Dataset
-Now for the fun part.
+Now for the fun part. Let's construct a QA query that will do all your QA work for you!
+
+The best way to go about writing a complex query is to start simple. Before we try to do everything at once, let's see if we can retrieve all the pieces we'll need to construct a QA query of the kind we're looking for, one step at a time.
+
+### 3a. Rename the Table and Columns to Be Universally Applicable
+I know we just went through a whole rigamarole about naming our columns appropriately, but I want to take a minute to highlight the importance of writing a QA script that can be used not just on our example data, but on ANY dataset we might encounter. If we can utilize placeholder column names&mdash;and better yet, placeholder *table* names&mdash; in our QA script, we might be able to apply the same code to alot of different datasets by making very minor adjustments instead of having to update all our column names and table names to match whatever dataset we happen to be working with. 
+
+Let's make our code universally applicable by retitling our 'top_spotify_songs_2023_table' table to 'table_name'. At the same time, let's retitle all our columns to column number alphanumerics like 'col1', 'col2', 'col3', etc. Athena will allow us to do both of these things using a simple ```WITH``` statement that specifies our new table name as well as existing or new column names:
+
+```
+WITH table_data (col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, col21, col22, col23, col24, col25, col26, col27, col28) as (SELECT * FROM 'top_spotify_songs_2023_table)
+```
+The only thing to keep in mind here is that the number of columns you're specifying in the parentheses after your new table name must align with the number of columns that are actually being returned in your ```SELECT``` statement. In this case, we have 28 columns and we don't want to drop any of them, so we're renaming all 28.
+
+The other thing to keep in mind about Athena's ```WITH``` statement is that it will only function as a precursor to another ```SELECT``` statement that is external to the ```WITH```statement itself. Hence running the code above will not actually do anything until you add another ```SELECT``` statement, like this:
+
+```
+WITH table_data (col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, col21, col22, col23, col24, col25, col26, col27, col28) as (SELECT * FROM top_spotify_songs_2023_table)
+SELECT * from table_data;
+```
+
+![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
+
+Also note that the external ```SELECT``` statement generated the same data as the internal ```SELECT * FROM top_spotify_songs_2023_table```, but specifies a new table called 'table_data' that contains new column names. 
+
+### 3b. Get the Table's Metadata (table_name, column_name, ordinal_position, data_type)
+Metadata is, quite literally, data about data. In this case, we're talking about retrieving data from the Athena table that we created in our ```CREATE TABLE IF NOT EXISTS``` script, not by looking directly at the data itself, but by querying the schema that's automatically stored when you create a table in Athena. You can think of the schema as the blueprint of how data from one table relates to data that may or may not be found in data within another.
+
+If at this point you're wondering why you would ever want to know about the data's data, you're asking the right question. Metadata is super helpful for doing QA work. For the purpose of automating it, you can think of this as a way for our code to automatically tell us things like the names of tables that are stored in our database, the names of columns that are stored in our tables, how many columns a table contains, even what datatypes a particular column may contain. By exploring the metadata of an Athena table, we can understand the contents of the data much faster than we could by opening it and trying to look at all of it.
+
+To retrieve metadata for a table that has been created using AWS Athena you can query the table's information_schema, specifying the ```table_name``` and ```table_schema``` in the query's ```WHERE``` statement, thus:
+```
+SELECT * 
+FROM information_schema
+WHERE table_schema = 'default'
+AND table_name='top_spotify_songs_2023_table'
+```
+![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
+
+To retrieve information exclusively about the *columns* of a table, try:
+
+```
+SELECT * 
+FROM information_schema.columns
+WHERE table_schema = 'default'
+AND table_name='top_spotify_songs_2023_table'
+```
+
+![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
+
+For the purposes of our QA procedure, we can specify the metadata we'll be interested in&mdash;namely, table_name, column_name, ordinal_position, and data_type:
+
+```
+SELECT distinct
+table_name
+, column_name
+, ordinal_position
+, data_type
+FROM information_schema.columns
+WHERE table_schema = 'default'
+and table_name = 'sample_table'
+order by ordinal_position
+```
+
+### 3b. Get the Null Count of the Values in a Column
+
+```
+SELECT 
+count(col1) null_count 
+FROM table_data 
+WHERE col1 is null 
+or col1 like '' 
+or col1 like ' '
+```
+### 3c. Get the Distinct Count of the Values in a Column
+
+    - A count of the non-null values in the column
+    - A count of the distinct values in the column
+    - A flag to indicate whether the column data contains duplicate entries
+    - A flag to indicate whether the column data contains non-alphanumeric characters
+    - A flag to indicate whether the column data contains letters
+    - A count of the minimum number of characters contained in the column's non-null entries  
+    - A count of the maximum number of characters contained in the columns' non-null entries
+    - The maximum value of the column data, interpreted as a string
+    - The minimum value of the column data, interpreted as a string
+    - A flag to indicate whether the column contains numbers
+    - A flag to indicate whether the column contains ONLY numbers
+    - The maximum value of the column data, interpreted as an integer, if applicable
+    - The minimum value of the column data, interpreted as an integer, if applicable
+    - A flag to indicate whether the column contains decimals
+    - A flag to indicate whether the column could be cast as a decimal datatype
+    - The maximum value of the column data, interpreted as a decimal, if applicable
+    - The minimum value of the column data, interpreted as a decimal, if applicable
+    - A flag to indicate whether the column could be interpreted as a date
+    - An indicator to describe the format of the date, if applicable
+    - The maximum value of the column data, interpreted as a date datatype, if applicable
+    - The minumum value of the column data, interpreted as a date datatype, if applicable
