@@ -17,23 +17,23 @@ While this tutorial promises to leave you with a query that will QA an entire da
 - **Step 2** : Create a Table for Your Raw Data in AWS Athena, Using Strings for the Datatypes
 - **Step 3** : Rename Your Table and Columns to Make Your Query Universally Applicable
 - **Step 4** : Write Individual Queries That Will:
-        4a. Get the Table's Metadata (table_name, column_name, ordinal_position, data_type)
-        4b. Get the Count of Null Values in a Column
-        4c. Get the Count of Non-Null and Distinct Values in a Column
-        4d. Create a Flag to Indicate Whether the Column Data Contains Duplicates
-        4e. Create a Flag to Indicate Whether the Column Data Contains Non-Alphanumeric Characters
-        4f. Create a Flag to Indicate Whether the Column Data Contains Letters
-        4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
-        4h. Get the Alphabetical Minimum and Maximum Value of the Data in the Column's Non-Null Entries
-        4i. Create a Flag to Indicate Whether the Column Data Contains Numbers
-        4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
-        4k. Get the Numeric Minimum and Maximum Value of the Data in the Column's Non-Null Entries, If Applicable
-        4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
-        4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
-        4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
-        4o. Create an Indicator to Describe the Format of the Date, If Applicable
-        4p. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
-        4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
+    + 4a. Get the Table's Metadata (table_name, column_name, ordinal_position, data_type)
+    + 4b. Get the Count of Null Values in a Column
+    + 4c. Get the Count of Non-Null and Distinct Values in a Column
+    + 4d. Create a Flag to Indicate Whether the Column Data Contains Duplicates
+    + 4e. Create a Flag to Indicate Whether the Column Data Contains Non-Alphanumeric Characters
+    + 4f. Create a Flag to Indicate Whether the Column Data Contains Letters
+    + 4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
+    + 4h. Get the Alphabetical Minimum and Maximum Value of the Data in the Column's Non-Null Entries
+    + 4i. Create a Flag to Indicate Whether the Column Data Contains Numbers
+    + 4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
+    + 4k. Get the Numeric Minimum and Maximum Value of the Data in the Column's Non-Null Entries, If Applicable
+    + 4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
+    + 4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
+    + 4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
+    + 4o. Create an Indicator to Describe the Format of the Date, If Applicable
+    + 4p. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
+    + 4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
 
 - **Step 5** : Tie all the Queries From Step 4 Together Into a Single Continuous Query ('col1') That Will Perform QA on A Single Column of Your Table's Data
 - **Step 6** : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
