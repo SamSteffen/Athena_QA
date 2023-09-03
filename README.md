@@ -1,4 +1,4 @@
-# How to Perform QA of an Entire Table or Dataset Using a Single Executable Athena Query (AWS)
+# How to Perform QA of an Entire Table or Dataset Using a Single Athena Query (AWS)
 ### Introduction
 Quality Assurance (QA) is an important part of any analyst's job. Whether you're just trying to get a high-level sense of what a dataset contains, looking for potential problems in preparing a dataset to be dashboard-ready, or aiming to explore the finer granularity of a dataset's various cross-sections and subsets, you're probably going to need to know your way around some query language to get there. 
 
@@ -16,38 +16,31 @@ While this tutorial promises to leave you with a query that will QA an entire da
 - **Step 1** : Upload Your Raw Data into AWS S3
 - **Step 2** : Create a Table for Your Raw Data in AWS Athena, Using Strings for the Datatypes
 - **Step 3** : Rename Your Table and Columns to Make Your Query Universally Applicable
-- **Step 4** : Write and Save Individual Queries to Discover Useful Information About Your String Data, Including:
-    - The name of the table in the Athena database
-    - The name of the column being QA'd
-    - The ordinal position in the table of the column being QA'd
-    - The datatype of the data in the column being QA'd
-    - A count of the null values in the column
-    - A count of the non-null values in the column
-    - A count of the distinct values in the column
-    - A flag to indicate whether the column data contains duplicate entries
-    - A flag to indicate whether the column data contains non-alphanumeric characters
-    - A flag to indicate whether the column data contains letters
-    - A count of the minimum number of characters contained in the column's non-null entries  
-    - A count of the maximum number of characters contained in the columns' non-null entries
-    - The maximum value of the column data, interpreted as a string
-    - The minimum value of the column data, interpreted as a string
-    - A flag to indicate whether the column contains numbers
-    - A flag to indicate whether the column contains ONLY numbers
-    - The maximum value of the column data, interpreted as an integer, if applicable
-    - The minimum value of the column data, interpreted as an integer, if applicable
-    - A flag to indicate whether the column contains decimals
-    - A flag to indicate whether the column could be cast as a decimal datatype
-    - The maximum value of the column data, interpreted as a decimal, if applicable
-    - The minimum value of the column data, interpreted as a decimal, if applicable
-    - A flag to indicate whether the column could be interpreted as a date
-    - An indicator to describe the format of the date, if applicable
-    - The maximum value of the column data, interpreted as a date datatype, if applicable
-    - The minumum value of the column data, interpreted as a date datatype, if applicable
-- **Step 5** : Tie all the Queries Together Into a Single Continuous Query
-- **Step 6** : Rewrite the Query From Step 5 To Handle Integer Datatypes
-- **Step 7** : Rewrite the Query From Step 5 To Handle Decimal Datatypes
-- **Step 8** : Rewrite the Query From Step 5 To Handle Date and Timestamp Datatypes
-- **Step 9** : Arrange and Modify the Query to Suit Your Dataset
+- **Step 4** : Write Individual Queries That Will:
+        4a. Get the Table's Metadata (table_name, column_name, ordinal_position, data_type)
+        4b. Get the Count of Null Values in a Column
+        4c. Get the Count of Non-Null and Distinct Values in a Column
+        4d. Create a Flag to Indicate Whether the Column Data Contains Duplicates
+        4e. Create a Flag to Indicate Whether the Column Data Contains Non-Alphanumeric Characters
+        4f. Create a Flag to Indicate Whether the Column Data Contains Letters
+        4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
+        4h. Get the Alphabetical Minimum and Maximum Value of the Data in the Column's Non-Null Entries
+        4i. Create a Flag to Indicate Whether the Column Data Contains Numbers
+        4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
+        4k. Get the Numeric Minimum and Maximum Value of the Data in the Column's Non-Null Entries, If Applicable
+        4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
+        4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
+        4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
+        4o. Create an Indicator to Describe the Format of the Date, If Applicable
+        4p. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
+        4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
+
+- **Step 5** : Tie all the Queries From Step 4 Together Into a Single Continuous Query ('col1') That Will Perform QA on A Single Column of Your Table's Data
+- **Step 6** : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
+- **Step 7** : Rewrite the Query From Step 5 To Handle All-Integer Datatypes
+- **Step 8** : Rewrite the Query From Step 5 To Handle All-Decimal Datatypes
+- **Step 9** : Rewrite the Query From Step 5 To Handle All-Date and Timestamp Datatypes
+- **Step 10** : Arrange and Modify the Query to Suit Your Dataset
 
 ### Sample Data
 For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 28 columns and 953 rows.
@@ -207,6 +200,13 @@ order by ordinal_position
 ### 4b. Get the Count of Null Values in a Column
 
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT 
 count(col1) null_count 
 FROM table_data 
@@ -214,9 +214,17 @@ WHERE col1 is null
 or col1 like '' 
 or col1 like ' '
 ```
+
 ### 4c. Get the Count of Non-Null and Distinct Values in a Column
 
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT 
 count(col1) total_nonnull_count
 , count(distinct col1) distinct_count
@@ -228,6 +236,13 @@ and col1 <> ' '
 ### 4d. Create a Flag to Indicate Whether the Column Data Contains Duplicates
 
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT
 a.total_nonnull_count
 , a.distinct_count
@@ -241,10 +256,18 @@ WHERE col1 is not null
 and col1 <> '' 
 and col1 <> ' '
 ```
+
 ### 4e. Create a Flag to Indicate Whether the Column Data Contains Non-Alphanumeric Characters
 Let's try to define some of what we mean when we say 'non-alphanumeric characters.' This could include exclamation points(!), 'at' symbols (@), pound signs (#), dollar signs($), percent signs (%), carrots(^), ampersands (&), asterisks(*), mathematical and logical operators (- / | + < >), as well as other punctuation marks like single and double quotation marks, backticks, apostrophes, commas, dashes, hypens,underscores, periods/decimals and question marks.
 
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT
 CASE WHEN non_alphanumeric_count > 0 THEN 'Y' ELSE 'N' END contains_non_alphanumerics
 FROM (
@@ -253,8 +276,16 @@ FROM (
     WHERE regexp_like(col1, '\!|\@|\#|\$|\%|\^|\&|\*|\+|\-|\/|\\|\<|\>|\,|\.|\?|\||\'|\"|\_|\|\')=True
 )
 ```
+
 ### 4f. Create a Flag to Indicate Whether the Column Data Contains Letters
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT 
 CASE WHEN contains_letters_count > 0 THEN 'Y' ELSE 'N' END contains_letters
 FROM (
@@ -263,9 +294,16 @@ FROM (
     WHERE regexp_like(col1, '[A-Za-z]')=True
 )
 ```
-### 4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
 
+### 4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT
 min(char_length) min_charlength
 , max(char_length) max_charlength
@@ -281,6 +319,13 @@ FROM (
 ### 4h. Get the Alphabetical Minimum and Maximum Value of the Data in the Column's Non-Null Entries
 
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT 
 min(col1)
 , max(col1)
@@ -289,6 +334,13 @@ WHERE col1 is not null and col1 <> '' and col1 <> ' '
 ```
 ### 4i. Create a Flag to Indicate Whether the Column Data Contains Numbers
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT 
 CASE WHEN contains_numbers_count > 0 THEN 'Y' ELSE 'N' END contains_numbers
 FROM (
@@ -297,9 +349,15 @@ FROM (
     WHERE regexp_like(col1, '\d')=True
 )
 ```
-
 ### 4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT
 CASE WHEN a.contains_numbers = 'Y'
     AND b.contains_letters = 'N'
@@ -337,6 +395,13 @@ FULL OUTER JOIN (
 ```
 ### 4k. Get the Numeric Minimum and Maximum Value of the Data in the Column's Non-Null Entries, If Applicable
 ```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
 SELECT
 CASE WHEN B.contains_only_numbers = 'Y' THEN cast(A.numeric_max as varchar) ELSE 'N/A' END numeric_max
 , CASE WHEN B.contains_only_numbers = 'Y' THEN cast(A.numeric_min as varchar) ELSE 'N/A' END numeric_min
@@ -386,15 +451,870 @@ FULL OUTER JOIN (
 ON 1=1
 ```
 ### 4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
-
-    - A flag to indicate whether the column contains decimals
+While this information would already be caught by the flag we created to locate non-alphanumeric characters, isolating the decimal from other non-alphanumerics can be useful for determining whether the data found in this column could potentially be classified as a decimal datatype.
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT
+CASE WHEN decimal_count > 0 THEN 'Y' ELSE 'N' END contains_decimals
+FROM (
+    SELECT 
+    count(col1) decimal_count
+    FROM table_data
+    WHERE regexp_like(col1, '\.')=True
+) 
+```
 ### 4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
-    - A flag to indicate whether the column could be cast as a decimal datatype
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT 
+CASE WHEN b.decimal_count = a.distinct_count THEN 'Y' ELSE 'N' END decimal_datatype_flag 
+FROM (
+    SELECT  
+    count(distinct col1) distinct_count
+    FROM table_data
+    WHERE col1 is not null and col1 <> '' and col1 <> ' '
+) a
+FULL OUTER JOIN (
+        SELECT 
+        count(col1) decimal_count
+        FROM table_data
+        WHERE regexp_like(col1, '\.')=True
+) b
+ON 1=1
+```
 ### 4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
-    - The maximum value of the column data, interpreted as a decimal, if applicable
-    - The minimum value of the column data, interpreted as a decimal, if applicable
-### 4o. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
-    - A flag to indicate whether the column could be interpreted as a date
-### 4p. Create an Indicator to Describe the Format of the Date, If Applicable
-    - An indicator to describe the format of the date, if applicable
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT 
+CASE WHEN decimal_max is not null then cast(decimal_max as varchar) else 'N/A' end decimal_max
+, CASE WHEN decimal_min is not null then cast(decimal_min as varchar) else 'N/A' end decimal_min
+FROM (
+    SELECT 
+    max(try(cast(col1 as decimal(18,2)))) decimal_max
+    , min(try(cast(col1 as decimal(18,2)))) decimal_min
+    FROM table_data
+    WHERE col1 is not null and col1 <> '' and col1 <> ' '
+)
+```
+### 4o. Create an Indicator to Describe the Format of the Date, If Applicable
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT 
+b.date_format as date_format_indicator
+FROM (
+    SELECT distinct
+    a.date_format
+    , count(a.date_format) date_count
+    FROM (
+        SELECT
+        col1
+        , CASE 
+        WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s')
+            THEN 'yyyy-mm-dd hh:mm:ss.mmm ZON'
+        WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$')
+            THEN 'yyyy-mm-dd hh:mm:ss.mmm'
+        WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}$')
+            THEN 'yyyy-mm-dd'
+        WHEN regexp_like(col1, '\d{4}\-\d{1,2}\-\d{1,2}$')
+            THEN 'yyyy-m-d'
+        WHEN regexp_like(col1, '\d{2}\-\d{2}\-\d{4}')
+            THEN 'mm-dd-yyyy'
+        WHEN regexp_like(col1, '\d{1,2}\-\d{1,2}\-\d{4}')
+            THEN 'm-d-yyyy'
+        WHEN regexp_like(col1, '\d{4}\/\d{2}\/\d{2}$')
+            THEN 'yyyy/mm/dd'
+        WHEN regexp_like(col1, '\d{4}\/\d{1,2}\/\d{1,2}$')
+            THEN 'yyyy/m/d'
+        WHEN regexp_like(col1, '\d{2}\/\d{2}\/\d{4}')
+            THEN 'mm/dd/yyyy'
+        WHEN regexp_like(col1, '\d{1,2}\/\d{1,2}\/\d{4}$')
+            THEN 'm/d/yyyy'
+        WHEN regexp_like(col1, '^\d{8}$')
+            THEN 'yyyymmdd'
+        ELSE 'N/A' END as date_format
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) a
+    GROUP BY a.date_format
+) b
+```
+
+### 4p. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
+
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT 
+CASE WHEN e.date_flag <> 'N/A' THEN 'Y' ELSE 'N' END date_flag
+FROM (
+    SELECT
+    CASE 
+        WHEN d.date_format <> 'N/A' AND d.date_count = d.total_nonnull_count
+        THEN d.date_format 
+        ELSE 'N/A' END date_flag
+    FROM (
+        SELECT
+        c.total_nonnull_count
+        , b.date_count
+        , b.date_format
+        FROM (
+            SELECT count(col1) total_nonnull_count 
+            FROM table_data 
+            WHERE col1 is not null and col1 <> '' and col1 <> ' ' 
+        ) c
+        FULL OUTER JOIN (
+            SELECT distinct
+            a.date_format
+            , count(a.date_format) date_count
+            FROM (
+                SELECT
+                col1
+                , CASE 
+                WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s')
+                    THEN 'yyyy-mm-dd hh:mm:ss.mmm ZON'
+                WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$')
+                    THEN 'yyyy-mm-dd hh:mm:ss.mmm'
+                WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}$')
+                    THEN 'yyyy-mm-dd'
+                WHEN regexp_like(col1, '\d{4}\-\d{1,2}\-\d{1,2}$')
+                    THEN 'yyyy-m-d'
+                WHEN regexp_like(col1, '\d{2}\-\d{2}\-\d{4}')
+                    THEN 'mm-dd-yyyy'
+                WHEN regexp_like(col1, '\d{1,2}\-\d{1,2}\-\d{4}')
+                    THEN 'm-d-yyyy'
+                WHEN regexp_like(col1, '\d{4}\/\d{2}\/\d{2}$')
+                    THEN 'yyyy/mm/dd'
+                WHEN regexp_like(col1, '\d{4}\/\d{1,2}\/\d{1,2}$')
+                    THEN 'yyyy/m/d'
+                WHEN regexp_like(col1, '\d{2}\/\d{2}\/\d{4}')
+                    THEN 'mm/dd/yyyy'
+                WHEN regexp_like(col1, '\d{1,2}\/\d{1,2}\/\d{4}$')
+                    THEN 'm/d/yyyy'
+                WHEN regexp_like(col1, '^\d{8}$')
+                    THEN 'yyyymmdd'
+                ELSE 'N/A' END as date_format
+                FROM table_data
+                WHERE col1 is not null and col1 <> '' and col1 <> ' ' 
+            ) a
+            GROUP BY date_format
+        ) b
+        ON 1=1
+    ) d
+) e
+```
 ### 4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+SELECT
+CASE 
+    WHEN i.date_flag = 'mm/dd/yyyy' OR i.date_flag = 'm/d/yyyy' THEN i.max_date1
+    WHEN i.date_flag = 'yyyy/mm/dd' OR i.date_flag = 'yyyy/m/d' THEN i.max_date2
+    WHEN i.date_flag = 'mm-dd-yyyy' OR i.date_flag = 'm-d-yyyy' THEN i.max_date3
+    WHEN i.date_flag = 'yyyy-mm-dd' OR i.date_flag = 'yyyy-m-d' THEN i.max_date4
+    WHEN i.date_flag = 'yyyymmdd' THEN i.max_date5
+    WHEN i.date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR i.date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN i.max_date6
+    ELSE 'N/A' END AS max_date
+, CASE
+    WHEN i.date_flag = 'mm/dd/yyyy' OR i.date_flag = 'm/d/yyyy' THEN i.min_date1
+    WHEN i.date_flag = 'yyyy/mm/dd' OR i.date_flag = 'yyyy/m/d' THEN i.min_date2
+    WHEN i.date_flag = 'mm-dd-yyyy' OR i.date_flag = 'm-d-yyyy' THEN i.min_date3
+    WHEN i.date_flag = 'yyyy-mm-dd' OR i.date_flag = 'yyyy-m-d' THEN i.min_date4
+    WHEN i.date_flag = 'yyyymmdd' THEN i.min_date5
+    WHEN i.date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR i.date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN i.min_date6
+    ELSE 'N/A' END AS min_date
+FROM (
+    SELECT 
+    CASE WHEN a.max_date1 is not null THEN cast(a.max_date1 as varchar) else 'N/A' END max_date1
+    , CASE WHEN a.min_date1 is not null THEN cast(a.min_date1 as varchar) else 'N/A' END min_date1
+    , CASE WHEN b.max_date2 is not null THEN cast(b.max_date2 as varchar) else 'N/A' END max_date2
+    , CASE WHEN b.min_date2 is not null THEN cast(b.min_date2 as varchar) else 'N/A' END min_date2
+    , CASE WHEN c.max_date3 is not null THEN cast(c.max_date3 as varchar) else 'N/A' END max_date3
+    , CASE WHEN c.min_date3 is not null THEN cast(c.min_date3 as varchar) else 'N/A' END min_date3
+    , CASE WHEN d.max_date4 is not null THEN cast(d.max_date4 as varchar) else 'N/A' END max_date4
+    , CASE WHEN d.min_date4 is not null THEN cast(d.min_date4 as varchar) else 'N/A' END min_date4
+    , CASE WHEN f.max_date5 is not null THEN cast(f.max_date5 as varchar) else 'N/A' END max_date5
+    , CASE WHEN f.min_date5 is not null THEN cast(f.min_date5 as varchar) else 'N/A' END min_date5
+    , CASE WHEN g.max_date6 is not null THEN cast(g.max_date6 as varchar) else 'N/A' END max_date6
+    , CASE WHEN g.min_date6 is not null THEN cast(g.min_date6 as varchar) else 'N/A' END min_date6
+    , h.date_flag
+    FULL OUTER JOIN  (
+        SELECT
+        max(
+            try(
+                cast(
+                    concat(
+                        --when data is formatted as 'mm/dd/yyyy' OR 'm/d/yyyy' use:
+                        split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                        ) 
+                    as date)
+                )
+            ) max_date1
+        , min(
+            try(
+                cast(
+                    concat(
+                        split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                        )
+                    as date)
+                )
+            ) min_date1
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) a
+    ON 1=1
+    FULL OUTER JOIN (
+        SELECT
+        max(
+            try(
+                cast(
+                    concat(
+                        --when data is formatted as 'yyyy/mm/dd' OR 'yyyy/m/d' use:
+                        split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                        ) 
+                    as date)
+                )
+            ) max_date2
+        , min(
+            try(
+                cast(
+                    concat(
+                        split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                        )
+                    as date)
+                )
+            ) min_date2
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) b
+    ON 1=1
+    FULL OUTER JOIN (
+        SELECT
+        max(
+            try(
+                cast(
+                    concat(
+                        --when data is formatted as 'mm-dd-yyyy' OR 'm-d-yyyy' use:
+                        split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                        ) 
+                    as date)
+                )
+            ) max_date3
+        , min(
+            try(
+                cast(
+                    concat(
+                        split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                        )
+                    as date)
+                )
+            ) min_date3
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) c
+    ON 1=1
+    FULL OUTER JOIN (
+        SELECT
+        max(
+            try(
+                cast(
+                    --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                    col1
+                    as date)
+                )
+            ) max_date4
+        , min(
+            try(
+                cast(
+                    --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                    col1
+                    as date)
+                )
+            ) min_date4
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) d
+    ON 1=1
+    FULL OUTER JOIN (
+        SELECT 
+        CASE WHEN substr(cast(e.max_int as varchar), 1, 2) in ('19','20') 
+            THEN CAST(e.max_date as varchar) 
+            ELSE 'N/A' END max_date5
+        , CASE WHEN substr(cast(e.min_int as varchar), 1, 2) in ('19','20')
+            THEN CAST(e.min_date as varchar)
+            ELSE 'N/A' END min_date5
+        FROM (
+        SELECT 
+        max(try(cast(col1 as int))) max_int
+        , min(try(cast(col1 as int))) min_int
+        , max(
+            try(
+                cast(
+                    concat(
+                        --when data is formatted as 'yyyymmdd' use:
+                        substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                        )
+                    as date)
+                )
+            ) max_date
+        , min(
+            try(
+                cast(
+                    concat(
+                        --when data is formatted as 'yyyymmdd' use:
+                        substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                        )
+                    as date)
+                )
+            ) min_date
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) e
+    ) f
+    ON 1=1
+    FULL OUTER JOIN (
+        SELECT
+        --when data is formatted as 'yyyy-mm-dd 00:00:00.000 ZON' OR 'yyyy-mm-dd 00:00:00.000' use:
+        max(try(cast(col1 as date))) max_date6
+        , min(try(cast(col1 as date))) min_date6
+        FROM table_data
+        WHERE col1 is not null and col1 <> '' and col1 <> ' '
+    ) g
+    ON 1=1
+    FULL OUTER JOIN (
+    SELECT 
+    CASE WHEN E.date_flag <> 'N/A' THEN 'Y' ELSE 'N' END date_flag
+    FROM (
+        SELECT
+        CASE 
+            WHEN D.date_format <> 'N/A' AND D.date_count = D.total_nonnull_count
+            THEN D.date_format 
+            ELSE 'N/A' END date_flag
+        FROM (
+            SELECT
+            C.total_nonnull_count
+            , B.date_count
+            , B.date_format
+            FROM (
+                SELECT count(col1) total_nonnull_count 
+                FROM table_data 
+                WHERE col1 is not null and col1 <> '' and col1 <> ' ' 
+            ) C
+            FULL OUTER JOIN (
+                SELECT distinct
+                A.date_format
+                , count(A.date_format) date_count
+                FROM (
+                    SELECT
+                    col1
+                    , CASE 
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm ZON'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}$')
+                        THEN 'yyyy-mm-dd'
+                    WHEN regexp_like(col1, '\d{4}\-\d{1,2}\-\d{1,2}$')
+                        THEN 'yyyy-m-d'
+                    WHEN regexp_like(col1, '\d{2}\-\d{2}\-\d{4}')
+                        THEN 'mm-dd-yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\-\d{1,2}\-\d{4}')
+                        THEN 'm-d-yyyy'
+                    WHEN regexp_like(col1, '\d{4}\/\d{2}\/\d{2}$')
+                        THEN 'yyyy/mm/dd'
+                    WHEN regexp_like(col1, '\d{4}\/\d{1,2}\/\d{1,2}$')
+                        THEN 'yyyy/m/d'
+                    WHEN regexp_like(col1, '\d{2}\/\d{2}\/\d{4}')
+                        THEN 'mm/dd/yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\/\d{1,2}\/\d{4}$')
+                        THEN 'm/d/yyyy'
+                    WHEN regexp_like(col1, '^\d{8}$')
+                        THEN 'yyyymmdd'
+                    ELSE 'N/A' END as date_format
+                    FROM table_data
+                    WHERE col1 is not null and col1 <> '' and col1 <> ' ' 
+                ) A
+                GROUP BY date_format
+            ) B
+            ON 1=1
+        ) D
+    ) E
+    ) h
+) i
+```
+# Step 5 : Tie all the Queries From Step 4 Together Into a Single Continuous Query ('col1') That Will Perform All of the QA Procedures Outlined in Step 4 on A Single Column of Your Table's Data
+
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = 'top_spotify_songs_2023_table'
+    ORDER BY ordinal_position
+)
+, metadata2 as (
+    SELECT m.*
+    , concat('col', cast(m.ordinal_position as varchar(3))) temp_column_name
+    FROM metadata m
+)
+, col1_str (
+    SELECT
+    md.table_name, md.column_name, md.ordinal_position, me.data_type, md.temp_column_name
+    , null_count, total_nonnull_count, distinct_count, contains_duplicates, contains_non_alphanumerics
+    , contains_letters, min_charlength, max_charlength, alphabet_min, alphabet_max
+    , contains_numbers, contains_only_numbers
+    , CASE WHEN contains_only_numbers = 'Y' THEN numeric_min else 'N/A' END numeric_min
+    , CASE WHEN contains_only_numbers = 'Y' THEN numeric_max else 'N/A' END numeric_max
+    , contains_decimals, decimal_datatype_flag
+    , CASE WHEN decimal_datatype_flag = 'Y' THEN decimal_min else 'n/A' END decimal_min
+    , CASE WHEN decimal_datatype_flag = 'Y' THEN decimal_max else 'n/A' END decimal_max
+    , CASE WHEN date_flag <> 'N/A' THEN 'Y' ELSE 'N' END date_flag
+    , CASE WHEN date_flag <> 'N/A' THEN date_flag ELSE 'N/A' END date_form
+    , CASE 
+        WHEN date_flag = 'mm/dd/yyyy' OR date_flag = 'm/d/yyyy' THEN max_date1
+        WHEN date_flag = 'yyyy/mm/dd' OR date_flag = 'yyyy/m/d' THEN max_date2
+        WHEN date_flag = 'mm-dd-yyyy' OR date_flag = 'm-d-yyyy' THEN max_date3
+        WHEN date_flag = 'yyyy-mm-dd' OR date_flag = 'yyyy-m-d' THEN max_date4
+        WHEN date_flag = 'yyyymmdd' THEN max_date5
+        WHEN date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN max_date6
+        ELSE 'N/A' END AS max_date
+    , CASE
+        WHEN date_flag = 'mm/dd/yyyy' OR date_flag = 'm/d/yyyy' THEN min_date1
+        WHEN date_flag = 'yyyy/mm/dd' OR date_flag = 'yyyy/m/d' THEN min_date2
+        WHEN date_flag = 'mm-dd-yyyy' OR date_flag = 'm-d-yyyy' THEN min_date3
+        WHEN date_flag = 'yyyy-mm-dd' OR date_flag = 'yyyy-m-d' THEN min_date4
+        WHEN date_flag = 'yyyymmdd' THEN min_date5
+        WHEN date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN min_date6
+        ELSE 'N/A' END AS min_date
+    FROM (
+        SELECT 
+        a.null_count, a.total_nonnull_count, a.distinct_count
+        , CASE WHEN a.total_nonnull_count = a.distinct_count THEN 'N' ELSE 'Y' END contains_duplicates
+        , CASE WHEN a.has_non_alphanumeric_characters_count = 0 THEN 'N' ELSE 'Y' END contains_non_alphanumerics
+
+        , CASE WHEN a.has_letters_count = 0 THEN 'N' ELSE 'Y' END contains_letters
+        , a.min_charlength, a.max_charlength, a.alphabet_min, a.alphabet_max
+
+        , CASE WHEN a.has_numbers_count = 0 THEN 'N' ELSE 'Y' END contains_numbers
+        , CASE WHEN a.has_numbers_count > 0 AND a.has_letters_count = 0 THEN 'Y' ELSE 'N' END contains_only_numbers
+        , CASE WHEN b.numeric_max is not null then cast(b.numeric_max as varchar) ELSE 'N/A' END numeric_max
+        , CASE WHEN b.numeric_min is not null then cast(b.numeric_min as varchar) ELSE 'N/A' END numeric_min
+
+        , CASE WHEN a.has_decimals_count = 0 THEN 'N' ELSE 'Y' END contains_decimals
+        , CASE WHEN a.decimal_datatype_count = a.distinct_count then 'Y' ELSE 'N' END decimal_datatype_flag
+        , CASE WHEN c.decimal_max is not null THEN cast(c.decimal_max as varchar) ELSE 'N/A' END decimal_max
+        , CASE WHEN c.decimal_min is not null THEN cast(c.decimal_min as varchar) ELSE 'N/A' END decimal_min
+
+        , CASE WHEN a.dateformat <> 'N/A' AND a.date_count = a.total_nonnull_count THEN a.dateformat ELSE 'N/A' END date_flag
+        , CASE WHEN d.max_date1 IS NOT NULL THEN CAST(d.max_date1 as varchar) ELSE 'N/A' END max_date1
+        , CASE WHEN d.min_date1 IS NOT NULL THEN CAST(d.min_date1 as varchar) ELSE 'N/A' END min_date1
+        , CASE WHEN e.max_date2 IS NOT NULL THEN CAST(e.max_date2 as varchar) ELSE 'N/A' END max_date2
+        , CASE WHEN e.min_date2 IS NOT NULL THEN CAST(e.min_date2 as varchar) ELSE 'N/A' END min_date2
+        , CASE WHEN f.max_date3 IS NOT NULL THEN CAST(f.max_date3 as varchar) ELSE 'N/A' END max_date3
+        , CASE WHEN f.min_date3 IS NOT NULL THEN CAST(f.min_date3 as varchar) ELSE 'N/A' END min_date3
+        , CASE WHEN g.max_date4 IS NOT NULL THEN CAST(g.max_date4 as varchar) ELSE 'N/A' END max_date4
+        , CASE WHEN g.min_date4 IS NOT NULL THEN CAST(g.min_date4 as varchar) ELSE 'N/A' END min_date4
+        , CASE WHEN h.max_date5 IS NOT NULL THEN CAST(h.max_date5 as varchar) ELSE 'N/A' END max_date5
+        , CASE WHEN h.min_date5 IS NOT NULL THEN CAST(h.min_date5 as varchar) ELSE 'N/A' END min_date5
+        , CASE WHEN i.max_date6 IS NOT NULL THEN CAST(i.max_date6 as varchar) ELSE 'N/A' END max_date6
+        , CASE WHEN i.min_date6 IS NOT NULL THEN CAST(i.min_date6 as varchar) ELSE 'N/A' END min_date6
+        FROM (
+            SELECT
+            a.null_count null_count
+            , count(col1) total_nonnull_count
+            , count(distinct col1) distinct_count
+            , min(length(col1)) min_charlength
+            , max(length(col1)) max_charlength
+            , min(col1) alphabet_min
+            , max(col1) alphabet_max
+            , b.has_numbers_count
+            , c.has_letters_count
+            , d.has_decimals_count
+            , e.has_non_alphanumeric_characters_count
+            , f.decimal_datatype_count
+            , g.date_count
+            , h.dateformat
+            FROM table_data
+            FULL OUTER JOIN (
+                SELECT count(col1) null_count
+                FROM table_data
+                WHERE col1 is null or col1 LIKE '' or col1 LIKE ' '
+            ) a
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_numbers_count
+                FROM table_data
+                WHERE regexp_like(col1, '\d')=True
+            ) b
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_letters_count
+                FROM table_data
+                WHERE regexp_like(col1, '[A-Za-z]')=True
+            ) c
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_decimals_count
+                FROM table_data
+                WHERE regexp_like(col1, '\.')=True
+            ) d
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_non_alphanumeric_characters_count
+                FROM table_data
+                WHERE regexp_like(col1, '\!|\@|\#|\$|\%|\^|\&|\*
+                                        |\+|\-|\/|\\|\<|\>|\,|\.
+                                        |\?|\||\'|\"|\_|\|\')=True
+            ) e
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) decimal_datatype_count
+                FROM table_data
+                WHERE regexp_like(col1, '^\d+\.\d+')=True
+            ) f
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) date_count
+                FROM table_data
+                WHERE regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s
+                                        |\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$
+                                        |\d{4}\-\d{2}\-\d{2}$
+                                        |\d{4}\-\d{1,2}\-\d{1,2}$
+                                        |\d{2}\-\d{2}\-\d{4}
+                                        |\d{1,2}\-\d{1,2}\-\d{4}
+                                        ||\d{4}\/\d{2}\/\d{2}$
+                                        |\d{4}\/\d{1,2}\/\d{1,2}$
+                                        |\d{2}\/\d{2}\/\d{4}
+                                        |\d{1,2}\/\d{1,2}\/\d{4}$
+                                        |^\d{8}$'
+                                        )=True
+            ) g
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT distinct
+                dateformat
+                , count(dateformat) format_count
+                FROM (
+                    SELECT
+                    col1
+                    , CASE 
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm ZON'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}$')
+                        THEN 'yyyy-mm-dd'
+                    WHEN regexp_like(col1, '\d{4}\-\d{1,2}\-\d{1,2}$')
+                        THEN 'yyyy-m-d'
+                    WHEN regexp_like(col1, '\d{2}\-\d{2}\-\d{4}')
+                        THEN 'mm-dd-yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\-\d{1,2}\-\d{4}')
+                        THEN 'm-d-yyyy'
+                    WHEN regexp_like(col1, '\d{4}\/\d{2}\/\d{2}$')
+                        THEN 'yyyy/mm/dd'
+                    WHEN regexp_like(col1, '\d{4}\/\d{1,2}\/\d{1,2}$')
+                        THEN 'yyyy/m/d'
+                    WHEN regexp_like(col1, '\d{2}\/\d{2}\/\d{4}')
+                        THEN 'mm/dd/yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\/\d{1,2}\/\d{4}$')
+                        THEN 'm/d/yyyy'
+                    WHEN regexp_like(col1, '^\d{8}$')
+                        THEN 'yyyymmdd'
+                    ELSE 'N/A' END as date_format
+                    FROM table_data
+                )
+                GROUP BY dateformat
+            ) h
+            ON 1=1
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+            GROUP BY 
+            a.null_count, b.has_numbers_count, c.has_letters_count
+            , d.has_decimals_count, e.has_non_alphanumeric_characters_count
+            , f.decimal_datatype_count, g.date_count, h.dateformat
+        ) a
+        FULL OUTER JOIN (
+            SELECT
+            max(try(cast(col1 as int))) numeric_max
+            , min(try(cast(col1 as int))) numeric_min
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) b
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(try(cast(col1 as decimal(18,2)))) decimal_max
+            , min(try(cast(col1 as decima(18,2)))) decimal_min
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) c
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'mm/dd/yyyy' OR 'm/d/yyyy' use:
+                            split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                            ) 
+                        as date)
+                    )
+                ) max_date1
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                            )
+                        as date)
+                    )
+                ) min_date1
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) d
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'yyyy/mm/dd' OR 'yyyy/m/d' use:
+                            split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                            ) 
+                        as date)
+                    )
+                ) max_date2
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                            )
+                        as date)
+                    )
+                ) min_date2
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) e
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'mm-dd-yyyy' OR 'm-d-yyyy' use:
+                            split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                            ) 
+                        as date)
+                    )
+                ) max_date3
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                            )
+                        as date)
+                    )
+                ) min_date3
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) f
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                        col1
+                        as date)
+                    )
+                ) max_date4
+            , min(
+                try(
+                    cast(
+                        --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                        col1
+                        as date)
+                    )
+                ) min_date4
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) g
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT 
+            CASE WHEN substr(cast(A.max_int as varchar), 1, 2) in ('19','20') 
+                THEN CAST(A.max_date as varchar) 
+                ELSE 'N/A' END max_date5
+            , CASE WHEN substr(cast(A.min_int as varchar), 1, 2) in ('19','20')
+                THEN CAST(A.min_date as varchar)
+                ELSE 'N/A' END min_date5
+            FROM (
+                SELECT 
+                max(try(cast(col1 as int))) max_int
+                , min(try(cast(col1 as int))) min_int
+                , max(
+                    try(
+                        cast(
+                            concat(
+                                --when data is formatted as 'yyyymmdd' use:
+                                substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                                )
+                            as date)
+                        )
+                    ) max_date
+                , min(
+                    try(
+                        cast(
+                            concat(
+                                --when data is formatted as 'yyyymmdd' use:
+                                substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                                )
+                            as date)
+                        )
+                    ) min_date
+                FROM table_data
+                WHERE col1 is not null and col1 <> '' and col1 <> ' '
+            ) A
+        ) h
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            --when data is formatted as 'yyyy-mm-dd 00:00:00.000 ZON' OR 'yyyy-mm-dd 00:00:00.000' use:
+            max(try(cast(col1 as date))) max_date6
+            , min(try(cast(col1 as date))) min_date6
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) i
+        ON 1=1
+    ) a
+    JOIN metadata2 md 
+    on 1=1
+    WHERE md.temp_column_name = 'col1'
+)
+, combined as (
+SELECT * FROM col1_str
+)
+SELECT * FROM combined ORDER BY ordinal_position;
+```
+# Step 6 : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
+To duplicate the Col1 script to be applicable to additonal columns, I recommend copying and pasting the above query into a new query window in your Athena query editor. Once there, you can change the 'col1' variable to 'col2' everywhere it appears in the query using Athena's FIND & REPLACE function. To summon the FIND & REPLACE menu, click anywhere in the query editor window and hit 'Ctrl + F' to open the FIND & REPLACE window. Once open, you can select the '+' sign to open the 'REPLACE' window. Enter 'col1' in the FIND searchbar and 'col2' in the REPLACE WITH bar and select 'REPLACE ALL'.
+
+Once the 'col1' variable has been replaced with 'col2', highlight the entire script and paste it back into the original query, directly below your col1 query from Step 5. 
+
+Repeat the above process until your query resembles the following:
+
+```
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = 'top_spotify_songs_2023_table'
+    ORDER BY ordinal_position
+)
+, metadata2 as (
+    SELECT m.*
+    , concat('col', cast(m.ordinal_position as varchar(3))) temp_column_name
+    FROM metadata m
+)
+, col1_str (--)
+, col2_str (--)
+, col3_str (--)
+, col4_str (--)
+, col5_str (--)
+, col6_str (--)
+, col7_str (--)
+, col8_str (--)
+, col9_str (--)
+, col10_str (--)
+, combined as (
+    SELECT * FROM col1_str
+    UNION SELECT * FROM col2_str
+    UNION SELECT * FROM col3_str
+    UNION SELECT * FROM col4_str
+    UNION SELECT * FROM col5_str
+    UNION SELECT * FROM col6_str
+    UNION SELECT * FROM col7_str
+    UNION SELECT * FROM col8_str
+    UNION SELECT * FROM col9_str
+    UNION SELECT * FROM col10_str
+)
+Select * from combined ORDER BY ordinal_position;
+```
+# Step 7 : Rewrite the Query From Step 5 To Handle All-Integer Datatypes
+```
+insert code here
+```
+# Step 8 : Rewrite the Query From Step 5 To Handle All-Decimal Datatypes
+```
+insert code here
+```
+# Step 9 : Rewrite the Query From Step 5 To Handle All-Date and Timestamp Datatypes
+```
+insert code here
+```
+# Step 10 : Arrange and Modify the Query to Suit Your Dataset
+
+# Limitations of This Query
+
+# Conclusions
