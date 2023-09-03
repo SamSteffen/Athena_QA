@@ -126,73 +126,7 @@ TBLPROPERTIES ('classification' = 'csv',
 ```
 > NOTE: Because we have a small dataset here, it's easy enough to open our csv file and take a peek at the column headers to discover things about the data that we need to know in order to know the best way to call our data in, like (1) how many columns there are and (2) the provided column names. If you're looking at a dataset for the first time and don't want to go to the trouble of downloading the csv, you can also view column names by querying the data using **S3 Select**. This is a handy feature that allows you to preview data using preloaded queries to view portions of your data. For more on how to use S3 Select, as well as limitations and requirements, check out the [S3 select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
 
-> HEADS UP: There may be instances when you're working in S3 and Athena when your data file is too large to open using S3 Select and may even be too large to safely download and open in any text editor. What to do? How are you supposed to retrieve column names to create a table in Athena if you can't see the data you're working with?
-
-### How To Retrieve Column Names From a Dataset Stored in S3 That's Too Large to Download or Open, Using AWS Athena
-A somewhat tedious (but useful, nonetheless) workaround to this problem involves creating a table using the format described above, but using placeholder names for the column headers and just taking a blind guess at how many columns you're likely to have. For instance, if the csv we're using in this example contained 17 million rows of data, it would probably be too large for us to open and view in excel or any text editor. But&mdash;we could create a table in which we retain the column headers provided by the data file. We do this by omitting from the ```TBLPROPERTIES``` definition the parameter ```'skip.header.line.count' = '1'```. We could then run the following script:
-
-```
-CREATE TABLE IF NOT EXISTS top_spotify_songs_2023_table (
-    column1 string comment 'NULL'
-    , column2 string comment 'NULL'	
-    , column3 string comment 'NULL'	
-    , column4 string comment 'NULL'	
-    , column5 string comment 'NULL'	
-    , column6 string comment 'NULL'	
-    , column7 string comment 'NULL'	
-    , column8 string comment 'NULL'	
-    , column9 string comment 'NULL'	
-    , column10 string comment 'NULL'	
-    , column11 string comment 'NULL'
-    , column12 string comment 'NULL'	
-    , column13 string comment 'NULL'	
-    , column14 string comment 'NULL'	
-    , column15 string comment 'NULL'	
-    , column16 string comment 'NULL'	
-    , column17 string comment 'NULL'	
-    , column18 string comment 'NULL'	
-    , column19 string comment 'NULL'	
-    , column20 string comment 'NULL'	
-    , column21 string comment 'NULL'
-    , column22 string comment 'NULL'	
-    , column23 string comment 'NULL'	
-    , column24 string comment 'NULL'	
-    , column25 string comment 'NULL'	
-    , column26 string comment 'NULL'	
-    , column27 string comment 'NULL'	
-    , column28 string comment 'NULL'	
-    , column29 string comment 'NULL'	
-    , column30 string comment 'NULL'	
-)
-ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
-WITH SERDEPROPERTIES ('field.delim' = ',')
-STORE AS TEXTFILE
-LOCATION 's3://MyUniqueBucket_01/TopSpotifySongsFolder/'
-TBLPROPERTIES ('classification' = 'csv');
-```
-Note that the above script just uses 'columnX' for the name, and contains more columns than our known dataset. That's okay! In fact, if it's your first time creating a table from a dataset you've never seen and you don't know how many columns there are, it's better to try creating and recreating the table until you can confirm that you've reached the 'end' of the dataset&mdash;that is, until your data starts showing columns that are entirely null. 
-
-Once you've created the table, you can view the first ten rows of data by running the following:
-
-```select * from top_spotify_songs_2023_table limit 10```
-
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
-
-My recommendation from here would be to identify a column that appears to contain mostly *numeric* data(In our example dataset, 'column3' certainly looks promising). Because you've called in all the columns as strings (synonymous with varchars in Athena) you can then order the query by that column <ins>in reverse order</ins>. Because Athena processes numbers before letters when given string data, the following query should reveal the column headers contained within the dataset (if there are any). 
-
-```SELECT * from top_spotify_songs_2023_table ORDER BY column3 DESC limit 10```
-
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
-
-Once you can view the column headers and confirm that you've arrived at the end of your data (because you are seeing null or unnamed columns), you can modify your ```CREATE TABLE IF NOT EXISTS``` script using the appropriate column names. 
-
-Next, once your column names are updated, you can also add the ```'skip.header.line.count' = '1'``` parameter back to the ```TBLPROPERTIES``` definition. 
-
-Drop the 'top_spotify_songs_2023_table' by running the following:
-
-```DROP TABLE IF EXISTS top_spotify_songs_2023_table```
-
-Finally, recreate 'top_spotify_songs_2023_table' using the updated script.
+> HEADS UP: There may be instances when you're working in S3 and Athena when your data file is too large to open or view using S3 Select and may even be too large to safely download and open in any text editor. What to do? How are you supposed to retrieve column names to create a table in Athena if you can't see the data you're working with? For a solution to this problem, check out this Github repository on [S3 Column Name Retrieval](https://github.com/SamSteffen/S3_Column_Name_Retrieval).
 
 # Step 3 : Rename Your Table and Columns to Make Your Query Universally Applicable
 I know we just went through a whole rigamarole about naming our columns appropriately, but I want to take a minute to highlight the importance of writing a QA script that can be used not just on our example data, but on ANY dataset we might encounter. If we can utilize placeholder column names&mdash;and better yet, placeholder *table* names&mdash; in our QA script, we might be able to apply the same code to alot of different datasets by making very minor adjustments instead of having to update all our column names and table names to match whatever dataset we happen to be working with. 
