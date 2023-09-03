@@ -454,16 +454,13 @@ ON 1=1
 ### 4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
 
     - A flag to indicate whether the column contains decimals
-### 4m.
+### 4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
     - A flag to indicate whether the column could be cast as a decimal datatype
-### 4n.
+### 4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
     - The maximum value of the column data, interpreted as a decimal, if applicable
-### 4o.
     - The minimum value of the column data, interpreted as a decimal, if applicable
-### 4p.
+### 4o. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
     - A flag to indicate whether the column could be interpreted as a date
-### 4q.
+### 4p. Create an Indicator to Describe the Format of the Date, If Applicable
     - An indicator to describe the format of the date, if applicable
-### 4r.
-    - The maximum value of the column data, interpreted as a date datatype, if applicable
-    - The minumum value of the column data, interpreted as a date datatype, if applicable
+### 4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
