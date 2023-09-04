@@ -181,7 +181,7 @@ table_name
 , data_type
 FROM information_schema.columns
 WHERE table_schema = 'default'
-and table_name = 'sample_table'
+and table_name = 'top_spotify_songs_2023_table'
 order by ordinal_position
 ```
 The output of this query should resemble the following:
