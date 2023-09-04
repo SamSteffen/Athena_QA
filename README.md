@@ -1,8 +1,10 @@
-# How to Perform QA of an Entire Table or Dataset Using a Single Athena Query (AWS)
+# How to Perform QA on Up To 10 Columns of a Dataset Using a Single Athena Query (AWS)
 ### Introduction
 Quality Assurance (QA) is an important part of any analyst's job. Whether you're just trying to get a high-level sense of what a dataset contains, looking for potential problems in preparing a dataset to be dashboard-ready, or aiming to explore the finer granularity of a dataset's various cross-sections and subsets, you're probably going to need to know your way around some query language to get there. 
 
-The purpose of this repository is to show how one might go about using Amazon Web Service's (AWS) interactive query service (a.k.a. Athena) to perform QA or User Acceptance Testing (UAT) of an entire table or dataset using a single executable query. The intention is also to show and explain a few other tips and tricks that may come in handy along the way, as a means of hopefully helping you get up to speed on how to make AWS, S3, and Athena work for you. 
+The purpose of this repository is to show how one might go about using Amazon Web Service's (AWS) interactive query service (a.k.a. Athena) to perform QA or User Acceptance Testing (UAT) of ten columns of any given table or dataset using a single executable query. "Why ten?" you ask? "Why not *all*?" The reason our QA procedure cannot perform QA of a table containing more than 10 columns has to do with the length of the query we'll be crafting, that will push upon the boundaries of what Athena is capable of handling. But fear not--there's no reason we can't duplicate the query once it's written and use it, or slightly varied versions thereof, to query an entire dataset, containing as many columns as you care to throw at it.
+
+The intention of creating this repository is also to show and explain a few other tips and tricks that may come in handy along the way, as a means of hopefully helping you get up to speed on how to make AWS, S3, and Athena work for you. 
 
 ### The Audience
 This repo is primarily intended for SQL users who are perhaps transitioning to AWS Athena and maybe haven't learned all the ropes yet.
@@ -37,8 +39,8 @@ While this tutorial promises to leave you with a query that will QA an entire da
 
 - **Step 5** : Tie all the Queries From Step 4 Together Into a Single Continuous Query ('col1') That Will Perform QA on A Single Column of Your Table's Data
 - **Step 6** : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
-- **Step 7** : Rewrite the Query From Step 5 To Handle All-Integer Datatypes
-- **Step 8** : Rewrite the Query From Step 5 To Handle All-Decimal Datatypes
+- **Step 7** : Rewrite the Query From Step 5 To Handle Integer Datatypes
+- **Step 8** : Rewrite the Query From Step 5 To Handle Decimal Datatypes
 - **Step 9** : Arrange and Modify the Query to Suit Your Dataset
 
 ### Sample Data
@@ -111,14 +113,16 @@ LOCATION 's3://MyUniqueBucket_01/TopSpotifySongsFolder/'
 TBLPROPERTIES ('classification' = 'csv',
     'skip.header.line.count' = '1');
 ```
-NOTE: Because we have a small dataset here, it's easy enough to open our csv file and take a peek at the column headers to discover things about the data that we need to know in order to know the best way to call our data in, like (1) how many columns there are and (2) the provided column names. If you're looking at a dataset for the first time and don't want to go to the trouble of downloading the csv, you can also view column names by querying the data using **S3 Select**. This is a handy feature that allows you to preview data using preloaded queries to view portions of your data. For more on how to use S3 Select, as well as limitations and requirements, check out the [S3 select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
+NOTE: Because we have a small dataset here, it's easy enough to open our csv file and take a peek at the column headers to discover things about the data that we need to know in order to know the best way to call our data in, like (1) how many columns there are and (2) the provided column names. 
+
+If you're looking at a dataset for the first time and don't want to go to the trouble of downloading the csv, you can also view column names by querying the data using **S3 Select**. This is a handy feature that allows you to preview data using preloaded queries to view portions of your data. For more on how to use S3 Select, as well as limitations and requirements, check out the [S3 select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
 
 > HEADS UP: There may be instances when you're working in S3 and Athena when your data file is too large to open or view using S3 Select and may even be too large to safely download and open in any text editor. What to do? How are you supposed to retrieve column names to create a table in Athena if you can't see the data you're working with? For a solution to this problem, check out this Github repository on [S3 Column Name Retrieval](https://github.com/SamSteffen/S3_Column_Name_Retrieval).
 
 # Step 3 : Rename Your Table and Columns to Make Your Query Universally Applicable
 I know we just went through a whole rigamarole about naming our columns appropriately, but I want to take a minute to highlight the importance of writing a QA script that can be used not just on our example data, but on ANY dataset we might encounter. If we can utilize placeholder column names&mdash;and better yet, placeholder *table* names&mdash; in our QA script, we might be able to apply the same code to alot of different datasets by making very minor adjustments instead of having to update all our column names and table names to match whatever dataset we happen to be working with. 
 
-Let's make our code universally applicable by retitling our 'top_spotify_songs_2023_table' table to 'table_name'. At the same time, let's retitle all our columns to column number alphanumerics like 'col1', 'col2', 'col3', etc. Athena will allow us to do both of these things using a simple ```WITH``` statement that specifies our new table name as well as existing or new column names:
+Let's make our code universally applicable by retitling our 'top_spotify_songs_2023_table' table to **'table_name'**. At the same time, let's retitle all our columns to column number alphanumerics like **'col1', 'col2', 'col3'**, etc. Athena will allow us to do both of these things using a simple ```WITH``` statement that specifies our new table name as well as existing or new column names:
 
 ```
 WITH table_data (
@@ -129,7 +133,7 @@ WITH table_data (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
 ```
-The only thing to keep in mind here is that the number of columns you're specifying in the parentheses after your new table name must align with the number of columns that are actually being returned in your ```SELECT``` statement. In this case, we have 28 columns and we don't want to drop any of them, so we're renaming all 28.
+The only thing to keep in mind here is that the number of columns you're specifying in the parentheses after your new table name must align with the number of columns that are actually being returned in your ```SELECT``` statement. In this case, we have 24 columns and we don't want to drop any of them, so we're renaming all 24.
 
 The other thing to keep in mind about Athena's ```WITH``` statement is that it will only function as a precursor to another ```SELECT``` statement that is external to the ```WITH```statement itself. Hence running the code above will not actually do anything until you add another ```SELECT``` statement, like this:
 
@@ -153,7 +157,7 @@ The best way to go about writing a complex query is to start simple. Before we t
 ### 4a. Get the Table's Metadata (table_name, column_name, ordinal_position, data_type)
 Metadata is, quite literally, data about data. In this case, we're talking about retrieving data from the Athena table that we created in our ```CREATE TABLE IF NOT EXISTS``` script, not by looking directly at the data itself, but by querying the schema that's automatically stored when you create a table in Athena. You can think of the schema as the blueprint of how data from one table relates to data that may or may not be found in data within another.
 
-If at this point you're wondering why you would ever want to know about the data's data, you're asking the right question. Metadata is super helpful for doing QA work. For the purpose of automating it, you can think of this as a way for our code to automatically tell us things like the names of tables that are stored in our database, the names of columns that are stored in our tables, how many columns a table contains, even what datatypes a particular column may contain. By exploring the metadata of an Athena table, we can understand the contents of the data much faster than we could by opening it and trying to look at all of it.
+If at this point you're wondering why you would ever want to know about the data's data, you're asking the right question. Metadata is super helpful for doing QA work. For the purpose of automating it, you can think of this as a way for our code to automatically tell us things like the names of tables that are stored in our database, the names of columns that are stored in our tables, how many columns a table contains, even what datatypes a particular column may contain. By exploring the metadata of an Athena table, we can understand the contents of the data much faster than we could by opening it and trying to look at all of it manually.
 
 To retrieve metadata for a table that has been created using AWS Athena you can query the table's information_schema, specifying the ```table_name``` and ```table_schema``` in the query's ```WHERE``` statement, thus:
 ```
@@ -213,6 +217,7 @@ The output of this query should resemble the following:
 | top_spotify_songs_20203_table  | liveness_percent         | 23                   | varchar       |
 | top_spotify_songs_20203_table  | speechiness_percent      | 24                   | varchar       |
 
+
 ### 4b. Get the Count of Null Values in a Column
 
 ```
@@ -230,6 +235,11 @@ WHERE col1 is null
 or col1 like '' 
 or col1 like ' '
 ```
+The output of the above should resemble the following:
+
+| **null_count** |
+|----------------|
+| 0              |
 
 ### 4c. Get the Count of Non-Null and Distinct Values in a Column
 
@@ -249,7 +259,22 @@ WHERE col1 is not null
 and col1 <> ''
 and col1 <> ' '
 ```
+The output of the above should resemble the following:
+
+| **total_nonnull_count** | **distinct_count** |
+|-------------------------|--------------------|
+| 953                     | 943                | 
+
 ### 4d. Create a Flag to Indicate Whether the Column Data Contains Duplicates
+By 'flag' here, I mean a 'Y' or a 'N' to indicate either:
+- Y = "Yes, the column contains duplicate values."
+- N = "No, all the values in the column are distinct."
+
+Flags can be helpful for guiding further QA work (for instance, knowing there are duplicates within a dataset might prompt us to ask, as a follow up, "Which rows/values are duplicated...and why?"). They can also be extremely useful for developing a more complicated code. By storing information (such as whether a dataset contains duplicates or not) in a flag, we now have an easy way to get our query to do more or less, based on the outcome of that information.
+
+This complexity will come into play in later steps. For now let's determine the logic for discovering whether our column of data contains duplicate values.
+
+Already we can use code we've already written to help us determine whether our column contains duplicates. If we know the total count of our non-null dataset as well as the distinct count, it stands to reason that if the total is greater than the distinct count, duplicates exist.
 
 ```
 WITH table_data (
@@ -262,7 +287,7 @@ WITH table_data (
 SELECT
 a.total_nonnull_count
 , a.distinct_count
-, CASE WHEN a.total_nonnull_count > a.distinct_count THEN 'N' ELSE 'Y' END contains_duplicates
+, CASE WHEN a.total_nonnull_count > a.distinct_count THEN 'Y' ELSE 'N' END contains_duplicates
 FROM (
     SELECT count(col1) total_nonnull_count
     , count(distinct col1) distinct_count 
@@ -272,9 +297,22 @@ WHERE col1 is not null
 and col1 <> '' 
 and col1 <> ' '
 ```
+The output of the above should resemble the following:
+
+| **total_nonnull_count** | **distinct_count** | **contains_duplicates** |
+|-------------------------|--------------------|-------------------------|
+| 953                     | 943                | Y                       |
 
 ### 4e. Create a Flag to Indicate Whether the Column Data Contains Non-Alphanumeric Characters
-Let's try to define some of what we mean when we say 'non-alphanumeric characters.' This could include exclamation points(!), 'at' symbols (@), pound signs (#), dollar signs($), percent signs (%), carrots(^), ampersands (&), asterisks(*), mathematical and logical operators (- / | + < >), as well as other punctuation marks like single and double quotation marks, backticks, apostrophes, commas, dashes, hypens,underscores, periods/decimals and question marks.
+Flags can also be useful for helping determine the appropriateness of a datatype assignment to a particular column of data. In our example dataset, recall that we've called all of our data columns into Athena as **string** datatypes. Perhaps this is appropriate for our first column, '**track_name**', but consider another column like '**artist_count**' which appears (at first glance) to only contain numbers. Such a column might be more appropriately called into Athena as an **integer**, as it would allow us to perform calculations on the data in that column without having to cast the data from a string into an integer first. 
+
+Flags that can look at all the data in a column and detect unformity can help us determine whether certain columns might be eligible for being recast as another type of data. The usefulness of knowing whether a data column contains non-alphanumeric characters is an important part of this consideration. 
+
+Let's try to define some of what we mean when we say 'non-alphanumeric characters.' This could include exclamation points(!), 'at' symbols (@), pound signs (#), dollar signs($), percent signs (%), carrots(^), ampersands (&), asterisks(*), mathematical and logical operators (- / | + < >), as well as other punctuation marks like single and double quotation marks('' ""), backticks(``), apostrophes('), commas(,), dashes(&mdash;), hypens(-),underscores(_), periods/decimals(.) and question marks(?).
+
+One of the best ways to determine whether a particular character is found in a dataset is to use regular expressions. Athena has a function called ```regexp_like()``` that will return True or False based on a regular expression input.
+
+Rather than putting the ```regexp_like()``` function in a case statement and attempting to determine the output, we can create a count of the number of 'True' returns, and use the returned count as the basis for whether our flag should be 'Y' or 'N'.
 
 ```
 WITH table_data (
@@ -292,6 +330,11 @@ FROM (
     WHERE regexp_like(col1, '\!|\@|\#|\$|\%|\^|\&|\*|\+|\-|\/|\\|\<|\>|\,|\.|\?|\||\'|\"|\_|\|\')=True
 )
 ```
+The output of the above should resemble the following:
+
+| **contains_non_alphanumerics** |
+|--------------------------------|
+| Y                              |
 
 ### 4f. Create a Flag to Indicate Whether the Column Data Contains Letters
 ```
@@ -310,6 +353,11 @@ FROM (
     WHERE regexp_like(col1, '[A-Za-z]')=True
 )
 ```
+The output of the above should resemble the following:
+
+| **contains_letters** |
+|----------------------|
+| Y                    |
 
 ### 4g. Get the Minimum and Maximum Value of the Number of Characters Contained in the Column's Non-Null Entries
 ```
@@ -332,7 +380,14 @@ FROM (
     and col1 <> '' and col1 <> ' '
     )
 ```
+The output of the above should resemble the following:
+
+| **min_charlength** | **max_charlength** |
+|--------------------|--------------------|
+| 2                  | 123                |
+
 ### 4h. Get the Alphabetical Minimum and Maximum Value of the Data in the Column's Non-Null Entries
+This metric will present us with actual data points. Alphabetical max and min are essentially the first and last items from a dataset when the column is read as a string and sorted alphabetically. If an item in such a column contains only numbers, Athena will order it before entries that begin with letters of the alphabet. It will also order numbers by their first digit, so it would read '9' as being higher in precedence than '8000'.
 
 ```
 WITH table_data (
@@ -343,11 +398,17 @@ WITH table_data (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
 SELECT 
-min(col1)
-, max(col1)
+min(col1) alphabetical_min
+, max(col1) alphabetical_max
 FROM table_data
 WHERE col1 is not null and col1 <> '' and col1 <> ' '
 ```
+The output of the above should resemble the following:
+
+| **alphabetical_min** | **alphabetical_max** |
+|----------------------|----------------------|
+| 10:35                | ZOOM                 |
+
 ### 4i. Create a Flag to Indicate Whether the Column Data Contains Numbers
 ```
 WITH table_data (
@@ -365,6 +426,12 @@ FROM (
     WHERE regexp_like(col1, '\d')=True
 )
 ```
+The output of the above should resemble the following:
+
+| **contains_numbers** |
+|----------------------|
+| Y                    |
+
 ### 4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
 ```
 WITH table_data (
