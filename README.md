@@ -42,7 +42,7 @@ While this tutorial promises to leave you with a query that will QA an entire da
 - **Step 9** : Arrange and Modify the Query to Suit Your Dataset
 
 ### Sample Data
-For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 28 columns and 953 rows.
+For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 24 columns and 953 rows.
 
 ![spotify data png](/Assets/images/Kaggle_data_screenshot_1.png)
 
@@ -55,15 +55,10 @@ To query data in Amazon Athena, you'll first want to upload your raw data files 
 2. Create a folder within your S3 bucket to hold your raw data file (e.g. "TopSpotifySongsFolder"). 
 3. Upload the csv or whatever dataset you happen to be using to the folder within your S3 bucket.
 
-> HEADS UP: When you call data into Athena using a 'CREATE TABLE' query, you will reference your data not according to the name of the file ('top-spotify-songs-2023.csv'), but rather according to the *location of the folder that houses the data* ('s3://MyUniqueBucket_01/TopSpotifySongsFolder'). Because of this, it's important to avoid storing multiple data files with differing datatypes, column amounts or column headers within the same folder in S3. Anything you intend to make a table from and query in Athena should be stored within its own folder.
-
-Once you've created your S3 bucket and folder, your uploaded data should look something like this:
-
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
-
+> HEADS UP: When you call data into Athena using a ```CREATE TABLE``` query, you will reference your data not according to the name of the file ('top-spotify-songs-2023.csv'), but rather according to the *location of the folder that houses the data* ('s3://MyUniqueBucket_01/TopSpotifySongsFolder'). Because of this, it's important to avoid storing multiple data files with differing datatypes, column amounts or column headers within the same folder in S3. Anything you intend to make a table from and query in Athena should be stored within its own folder.
 
 # Step 2: Create a Table for Your Data in AWS Athena
-Once your data is uploaded to S3, you can pull it into Athena with a CREATE TABLE script. 
+Once your data is uploaded to S3, you can pull it into Athena with a ```CREATE TABLE``` script. 
 
 Note that several of the column headers in our csv contain special characters (like '()' and '%'). Athena isn't going to like these. As a general rule, it's best not to include special characters in your column headers when working in AWS Athena. Underscores are the only 'special characters' allowed. For more on the specifications for table and column names in AWS Athena, check out the [AWS Athena special characters documentation](https://docs.aws.amazon.com/athena/latest/ug/tables-databases-columns-names.html).
 
@@ -116,7 +111,7 @@ LOCATION 's3://MyUniqueBucket_01/TopSpotifySongsFolder/'
 TBLPROPERTIES ('classification' = 'csv',
     'skip.header.line.count' = '1');
 ```
-> NOTE: Because we have a small dataset here, it's easy enough to open our csv file and take a peek at the column headers to discover things about the data that we need to know in order to know the best way to call our data in, like (1) how many columns there are and (2) the provided column names. If you're looking at a dataset for the first time and don't want to go to the trouble of downloading the csv, you can also view column names by querying the data using **S3 Select**. This is a handy feature that allows you to preview data using preloaded queries to view portions of your data. For more on how to use S3 Select, as well as limitations and requirements, check out the [S3 select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
+NOTE: Because we have a small dataset here, it's easy enough to open our csv file and take a peek at the column headers to discover things about the data that we need to know in order to know the best way to call our data in, like (1) how many columns there are and (2) the provided column names. If you're looking at a dataset for the first time and don't want to go to the trouble of downloading the csv, you can also view column names by querying the data using **S3 Select**. This is a handy feature that allows you to preview data using preloaded queries to view portions of your data. For more on how to use S3 Select, as well as limitations and requirements, check out the [S3 select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
 
 > HEADS UP: There may be instances when you're working in S3 and Athena when your data file is too large to open or view using S3 Select and may even be too large to safely download and open in any text editor. What to do? How are you supposed to retrieve column names to create a table in Athena if you can't see the data you're working with? For a solution to this problem, check out this Github repository on [S3 Column Name Retrieval](https://github.com/SamSteffen/S3_Column_Name_Retrieval).
 
@@ -129,7 +124,7 @@ Let's make our code universally applicable by retitling our 'top_spotify_songs_2
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -142,15 +137,13 @@ The other thing to keep in mind about Athena's ```WITH``` statement is that it w
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT * from table_data;
 ```
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
-
-Also note that the external ```SELECT``` statement generated the same data as the internal ```SELECT * FROM top_spotify_songs_2023_table```, but specifies a new table called 'table_data' that contains new column names. 
+Also note that the external ```SELECT``` statement generates the same data as the internal ```SELECT * FROM top_spotify_songs_2023_table```, but specifies a new table called 'table_data' that contains new column names. 
 
 # Step 4: Write and Save Individual Queries to Discover Useful Information About Your String Data
 Now for the fun part. Let's construct a QA query that will do all your QA work for you!
@@ -169,18 +162,14 @@ FROM information_schema
 WHERE table_schema = 'default'
 AND table_name='top_spotify_songs_2023_table'
 ```
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
 To retrieve information exclusively about the *columns* of a table, try:
-
 ```
 SELECT * 
 FROM information_schema.columns
 WHERE table_schema = 'default'
 AND table_name='top_spotify_songs_2023_table'
 ```
-
-![data in S3](/Assets/images/Kaggle_data_screenshot_1.png)
 
 For the purposes of our QA procedure, we can specify the metadata we'll be interested in&mdash;namely, table_name, column_name, ordinal_position, and data_type:
 
@@ -195,6 +184,34 @@ WHERE table_schema = 'default'
 and table_name = 'sample_table'
 order by ordinal_position
 ```
+The output of this query should resemble the following:
+
+| **table_name**                 | **column_name**          | **ordinal_position** | **data_type** |
+|--------------------------------|--------------------------|----------------------|---------------|
+| top_spotify_songs_20203_table  | track_name               | 1                    | varchar       |
+| top_spotify_songs_20203_table  | artist_name              | 2                    | varchar       |
+| top_spotify_songs_20203_table  | artist_count             | 3                    | varchar       |
+| top_spotify_songs_20203_table  | released_year            | 4                    | varchar       |
+| top_spotify_songs_20203_table  | released_month           | 5                    | varchar       |
+| top_spotify_songs_20203_table  | released_day             | 6                    | varchar       |
+| top_spotify_songs_20203_table  | in_spotify_playlists     | 7                    | varchar       |           
+| top_spotify_songs_20203_table  | in_spotify_charts        | 8                    | varchar       |
+| top_spotify_songs_20203_table  | streams                  | 9                    | varchar       |
+| top_spotify_songs_20203_table  | in_apple_playlists       | 10                   | varchar       |
+| top_spotify_songs_20203_table  | in_apple_charts          | 11                   | varchar       |
+| top_spotify_songs_20203_table  | in_deezer_playlists      | 12                   | varchar       |
+| top_spotify_songs_20203_table  | in_deezer_charts         | 13                   | varchar       |
+| top_spotify_songs_20203_table  | in_shazam_charts         | 14                   | varchar       |
+| top_spotify_songs_20203_table  | bpm                      | 15                   | varchar       |
+| top_spotify_songs_20203_table  | key                      | 16                   | varchar       |
+| top_spotify_songs_20203_table  | mode                     | 17                   | varchar       |
+| top_spotify_songs_20203_table  | danceability_percent     | 18                   | varchar       |
+| top_spotify_songs_20203_table  | valence_percent          | 19                   | varchar       |
+| top_spotify_songs_20203_table  | energy_percent           | 20                   | varchar       |
+| top_spotify_songs_20203_table  | acousticness_percent     | 21                   | varchar       |
+| top_spotify_songs_20203_table  | instrumentalness_percent | 22                   | varchar       |
+| top_spotify_songs_20203_table  | liveness_percent         | 23                   | varchar       |
+| top_spotify_songs_20203_table  | speechiness_percent      | 24                   | varchar       |
 
 ### 4b. Get the Count of Null Values in a Column
 
@@ -202,7 +219,7 @@ order by ordinal_position
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -220,7 +237,7 @@ or col1 like ' '
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -238,7 +255,7 @@ and col1 <> ' '
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -263,7 +280,7 @@ Let's try to define some of what we mean when we say 'non-alphanumeric character
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -281,7 +298,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -299,7 +316,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -321,7 +338,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -336,7 +353,7 @@ WHERE col1 is not null and col1 <> '' and col1 <> ' '
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -353,7 +370,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -397,7 +414,7 @@ FULL OUTER JOIN (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -455,7 +472,7 @@ While this information would already be caught by the flag we created to locate 
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -473,7 +490,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -498,7 +515,7 @@ ON 1=1
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -518,7 +535,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -568,7 +585,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -635,7 +652,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -881,7 +898,7 @@ FROM (
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -1258,7 +1275,7 @@ V V V V V
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -1317,7 +1334,7 @@ To query all 28 columns of our dataset, my recommendation would be to write two 
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -1396,7 +1413,7 @@ SELECT * FROM col2_int
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
@@ -1490,7 +1507,7 @@ Now that we have developed QA code that will handle string, integer and decimal 
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
-    col21, col22, col23, col24, col25, col26, col27, col28
+    col21, col22, col23, col24
     ) as (
         SELECT * FROM 'top_spotify_songs_2023_table
         )
