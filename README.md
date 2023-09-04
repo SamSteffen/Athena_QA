@@ -39,8 +39,7 @@ While this tutorial promises to leave you with a query that will QA an entire da
 - **Step 6** : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
 - **Step 7** : Rewrite the Query From Step 5 To Handle All-Integer Datatypes
 - **Step 8** : Rewrite the Query From Step 5 To Handle All-Decimal Datatypes
-- **Step 9** : Rewrite the Query From Step 5 To Handle All-Date and Timestamp Datatypes
-- **Step 10** : Arrange and Modify the Query to Suit Your Dataset
+- **Step 9** : Arrange and Modify the Query to Suit Your Dataset
 
 ### Sample Data
 For the purposes of this How-To, let's utilize a sample dataset from [Kaggle.com](https://www.kaggle.com/datasets/nelgiriyewithana/top-spotify-songs-2023?resource=download). This dataset contains data pertaining to the 'Most Streamed Spotify Songs in 2023'. A quick glance will show this data contains 28 columns and 953 rows.
@@ -1251,8 +1250,10 @@ To duplicate the Col1 script to be applicable to additonal columns, I recommend 
 
 Once the 'col1' variable has been replaced with 'col2', highlight the entire script and paste it back into the original query, directly below your col1 query from Step 5. 
 
-Repeat the above process until your query resembles the following:
+Repeat the above process until your query resembles the code below:
 
+> NOTE: The code below will not actually run if copied and pasted into your query editor. The lines of code that begin with 'col' names are meant to represent the structure of what your code should look like. They are written this way to conserve space in this repository.
+V V V V V
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
@@ -1301,20 +1302,686 @@ WITH table_data (
 )
 Select * from combined ORDER BY ordinal_position;
 ```
-# Step 7 : Rewrite the Query From Step 5 To Handle All-Integer Datatypes
+At this point you may be wondering why we've only opted to query the first 10 columns of our data? Why not do all 28 columns at once?
+
+The reason is becuase of Athena's query limitations. The maximum allowed query string length is 262144 bytes, where the strings are encoded in UTF-8.
+
+When our col1 Query from STEP 5 is copied ten times, our code exceeds 152,000 characters and occupies nearly 3600 lines of code. Athena can handle this amount, but try much more and you may get an error message.
+
+To query all 28 columns of our dataset, my recommendation would be to write two separate queries: the first querying columns #1-14, the second querying columns #15-28. Depending on the size of your dataset, this amount may have to change. Anecdotally, I'll share that I've been successful querying up to 10 columns at a time from datasets that contain upwards of 17 million records.
+
+[Click here to read more about AWS Query Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html).
+
+# Step 7 : Rewrite the Col1_str() Query From Step 5 To Handle Integer Datatypes
 ```
-insert code here
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = 'top_spotify_songs_2023_table'
+    ORDER BY ordinal_position
+)
+, metadata2 as (
+    SELECT m.*
+    , concat('col', cast(m.ordinal_position as varchar(3))) temp_column_name
+    FROM metadata m
+)
+, col2_int as (
+SELECT
+md.table_name, md.column_name, md.ordinal_position, md.data_type, md.temp_column_name
+, b.null_count, total_nonnull_count, distinct_count
+, CASE WHEN total_nonnull_count > distinct_count then 'Y' ELSE 'N' END contains_duplicates
+, 'N' contains_non_alphanumerics
+, 'N' contains_letters
+, min_charlength, max_charlength, alphabet_min, alphabet_max
+, 'Y' contains_numbers
+, 'Y' contains_only_numbers
+, numeric_min, numeric_max
+, 'N' contains_decimals
+, 'N' decimal_datatype_flag
+, 'N/A' decimal_max
+, 'N/A' decimal_min
+, 'N/A' date_flag
+, 'N/A' date_form
+, 'N/A' max_date
+, 'N/A' min_date
+FROM (
+    SELECT
+    count(col2) total_nonnull_count
+    , count(distinct col2) distinct_count
+    , min(length(cast(col2 as varchar))) min_charlength
+    , max(length(cast(col2 as varchar))) max_charlength
+    , min(cast(col2 as varchar)) alphabet_min
+    , max(cast(col2 as varchar)) alphabet_max
+    , cast(min(col2 as varchar)) numeric_min
+    , cast(max(col2 as varchar)) numeric_max
+    FROM table_data
+    WHERE col2 is not null and cast(col2 as varchar) <> '' and cast(col2 as varchar) <> ' '
+    )
+    FULL OUTER JOIN (
+    SELECT total_count-non_null_count null_count
+    FROM (
+        SELECT 
+        count(*) total_count
+        , a.non_null_count
+        FROM table_data
+        FULL OUTER JOIN (
+            SELECT count(col2) non_null_count
+            FROM table_data where regexp_like(cast(col2 as varchar), '\d')
+            ) a
+        ON 1=1
+        GROUP BY a.non_null_count
+        ) b
+    )
+    ON 1=1
+    FULL OUTER JOIN metadata2 md
+    ON 1=1
+    WHERE md.temp_column_name = 'col2'
+)
+SELECT * FROM col2_int
 ```
-# Step 8 : Rewrite the Query From Step 5 To Handle All-Decimal Datatypes
+# Step 8 : Rewrite the Col1_str Query From Step 5 To Handle Decimal Datatypes
 ```
-insert code here
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = 'top_spotify_songs_2023_table'
+    ORDER BY ordinal_position
+)
+, metadata2 as (
+    SELECT m.*
+    , concat('col', cast(m.ordinal_position as varchar(3))) temp_column_name
+    FROM metadata m
+)
+, col3_dec as (
+    SELECT
+    md.table_name, md.column_name, md.ordinal_position, md.data_type, md.temp_column_name
+    , null_count, total_nonnull_count, distinct_count
+    , CASE when total_nonnull_count <> distinct_count THEN 'Y' ELSE 'N' end as contains_duplicates
+    , contains_non_alphanumerics, contains_letters
+    , min_charlength, max_charlength
+    , alphabet_min, alphabet_max
+    , contains_numbers, contains_only_numbers
+    , CASE 
+        WHEN numeric_max is null THEN split_part(cast(decimal_max as varchar),'.',1)
+        ELSE numeric_max END numeric_max
+    , CASE
+        WHEN numeric_min is null THEN split_part(cast(decimal_min as varchar),'.',1)
+        ELSE numeric_min END numeric_min
+    , contains_decimals, decimal_datatype_flag, decimal_max, decimal_min, date_flag, date_form
+    , max_date, min_date
+    FROM (
+        SELECT 
+        b.null_count
+        , count(col3) total_nonnull_count
+        , count(distinct col3) distinct_count
+        , 'Y' contains_non_alphanumerics
+        , length(min(try(cast(col3 as varchar)))) min_charlength
+        , length(max(try(cast(col3 as varchar)))) max_charlength
+        , min(try(cast(col3 as varchar))) alphabet_min
+        , max(try(cast(col3 as varchar))) alphabet_max
+        , 'Y' contains_numbers
+        , 'N' contains_only_numbers
+        , cast(max(try(cast(col3 as int))) as varchar) numeric_max
+        , cast(min(try(cast(col3 as int))) as varchar) numeric_min
+        , 'Y' contains_decimals
+        , 'Y' decimal_datatype_flag
+        , cast(max(col3) as varchar) decimal_max
+        , cast(min(col3) as varchar) decimal_min
+        , 'N' date_flag
+        , 'N/A' date_form
+        , 'N/A' max_date
+        , 'N/A' min_date
+
+        FROM table_data
+        FULL OUTER JOIN (
+            SELECT
+            total_count-non_null_count null_count
+            FROM (
+            SELECT
+            count(*) total_count
+            , a.non_null_count
+            FROM table_data
+            FULL OUTER JOIN (
+                SELECT
+                count(col3) non_null_count
+                FROM table_data
+                WHERE regexp_like(cast(col3 as varchar), '\d')
+                ) a
+            ON 1=1
+            WHERE col3 is not null and cast(col3 as varchar) <> '' and cast(col3 as varchar) <> ' '
+            GROUP BY a.non_null_count
+            ) b
+        )
+    )
+    JOIN metadata2 md 
+    ON 1=1
+    WHERE md.temp_column_name = 'col3'
+)
 ```
-# Step 9 : Rewrite the Query From Step 5 To Handle All-Date and Timestamp Datatypes
+# Step 9 : Arrange and Modify the Query to Suit Your Dataset
+
+Now that we have developed QA code that will handle string, integer and decimal datatypes, we can integrate these altogether into the same query. The following is the full code for a 3-column table in which the first column is a **string** datatype, the second column is an **integer** datatype, and the third column is a **decimal** datatype. 
+
 ```
-insert code here
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24, col25, col26, col27, col28
+    ) as (
+        SELECT * FROM 'top_spotify_songs_2023_table
+        )
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = 'top_spotify_songs_2023_table'
+    ORDER BY ordinal_position
+)
+, metadata2 as (
+    SELECT m.*
+    , concat('col', cast(m.ordinal_position as varchar(3))) temp_column_name
+    FROM metadata m
+)
+, col1_str (
+    SELECT
+    md.table_name, md.column_name, md.ordinal_position, me.data_type, md.temp_column_name
+    , null_count, total_nonnull_count, distinct_count, contains_duplicates, contains_non_alphanumerics
+    , contains_letters, min_charlength, max_charlength, alphabet_min, alphabet_max
+    , contains_numbers, contains_only_numbers
+    , CASE WHEN contains_only_numbers = 'Y' THEN numeric_min else 'N/A' END numeric_min
+    , CASE WHEN contains_only_numbers = 'Y' THEN numeric_max else 'N/A' END numeric_max
+    , contains_decimals, decimal_datatype_flag
+    , CASE WHEN decimal_datatype_flag = 'Y' THEN decimal_min else 'n/A' END decimal_min
+    , CASE WHEN decimal_datatype_flag = 'Y' THEN decimal_max else 'n/A' END decimal_max
+    , CASE WHEN date_flag <> 'N/A' THEN 'Y' ELSE 'N' END date_flag
+    , CASE WHEN date_flag <> 'N/A' THEN date_flag ELSE 'N/A' END date_form
+    , CASE 
+        WHEN date_flag = 'mm/dd/yyyy' OR date_flag = 'm/d/yyyy' THEN max_date1
+        WHEN date_flag = 'yyyy/mm/dd' OR date_flag = 'yyyy/m/d' THEN max_date2
+        WHEN date_flag = 'mm-dd-yyyy' OR date_flag = 'm-d-yyyy' THEN max_date3
+        WHEN date_flag = 'yyyy-mm-dd' OR date_flag = 'yyyy-m-d' THEN max_date4
+        WHEN date_flag = 'yyyymmdd' THEN max_date5
+        WHEN date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN max_date6
+        ELSE 'N/A' END AS max_date
+    , CASE
+        WHEN date_flag = 'mm/dd/yyyy' OR date_flag = 'm/d/yyyy' THEN min_date1
+        WHEN date_flag = 'yyyy/mm/dd' OR date_flag = 'yyyy/m/d' THEN min_date2
+        WHEN date_flag = 'mm-dd-yyyy' OR date_flag = 'm-d-yyyy' THEN min_date3
+        WHEN date_flag = 'yyyy-mm-dd' OR date_flag = 'yyyy-m-d' THEN min_date4
+        WHEN date_flag = 'yyyymmdd' THEN min_date5
+        WHEN date_flag = 'yyyy-mm-dd hh:mm:ss.mmm ZON' OR date_flag = 'yyyy-mm-dd hh:mm:ss.mmm' THEN min_date6
+        ELSE 'N/A' END AS min_date
+    FROM (
+        SELECT 
+        a.null_count, a.total_nonnull_count, a.distinct_count
+        , CASE WHEN a.total_nonnull_count = a.distinct_count THEN 'N' ELSE 'Y' END contains_duplicates
+        , CASE WHEN a.has_non_alphanumeric_characters_count = 0 THEN 'N' ELSE 'Y' END contains_non_alphanumerics
+
+        , CASE WHEN a.has_letters_count = 0 THEN 'N' ELSE 'Y' END contains_letters
+        , a.min_charlength, a.max_charlength, a.alphabet_min, a.alphabet_max
+
+        , CASE WHEN a.has_numbers_count = 0 THEN 'N' ELSE 'Y' END contains_numbers
+        , CASE WHEN a.has_numbers_count > 0 AND a.has_letters_count = 0 THEN 'Y' ELSE 'N' END contains_only_numbers
+        , CASE WHEN b.numeric_max is not null then cast(b.numeric_max as varchar) ELSE 'N/A' END numeric_max
+        , CASE WHEN b.numeric_min is not null then cast(b.numeric_min as varchar) ELSE 'N/A' END numeric_min
+
+        , CASE WHEN a.has_decimals_count = 0 THEN 'N' ELSE 'Y' END contains_decimals
+        , CASE WHEN a.decimal_datatype_count = a.distinct_count then 'Y' ELSE 'N' END decimal_datatype_flag
+        , CASE WHEN c.decimal_max is not null THEN cast(c.decimal_max as varchar) ELSE 'N/A' END decimal_max
+        , CASE WHEN c.decimal_min is not null THEN cast(c.decimal_min as varchar) ELSE 'N/A' END decimal_min
+
+        , CASE WHEN a.dateformat <> 'N/A' AND a.date_count = a.total_nonnull_count THEN a.dateformat ELSE 'N/A' END date_flag
+        , CASE WHEN d.max_date1 IS NOT NULL THEN CAST(d.max_date1 as varchar) ELSE 'N/A' END max_date1
+        , CASE WHEN d.min_date1 IS NOT NULL THEN CAST(d.min_date1 as varchar) ELSE 'N/A' END min_date1
+        , CASE WHEN e.max_date2 IS NOT NULL THEN CAST(e.max_date2 as varchar) ELSE 'N/A' END max_date2
+        , CASE WHEN e.min_date2 IS NOT NULL THEN CAST(e.min_date2 as varchar) ELSE 'N/A' END min_date2
+        , CASE WHEN f.max_date3 IS NOT NULL THEN CAST(f.max_date3 as varchar) ELSE 'N/A' END max_date3
+        , CASE WHEN f.min_date3 IS NOT NULL THEN CAST(f.min_date3 as varchar) ELSE 'N/A' END min_date3
+        , CASE WHEN g.max_date4 IS NOT NULL THEN CAST(g.max_date4 as varchar) ELSE 'N/A' END max_date4
+        , CASE WHEN g.min_date4 IS NOT NULL THEN CAST(g.min_date4 as varchar) ELSE 'N/A' END min_date4
+        , CASE WHEN h.max_date5 IS NOT NULL THEN CAST(h.max_date5 as varchar) ELSE 'N/A' END max_date5
+        , CASE WHEN h.min_date5 IS NOT NULL THEN CAST(h.min_date5 as varchar) ELSE 'N/A' END min_date5
+        , CASE WHEN i.max_date6 IS NOT NULL THEN CAST(i.max_date6 as varchar) ELSE 'N/A' END max_date6
+        , CASE WHEN i.min_date6 IS NOT NULL THEN CAST(i.min_date6 as varchar) ELSE 'N/A' END min_date6
+        FROM (
+            SELECT
+            a.null_count null_count
+            , count(col1) total_nonnull_count
+            , count(distinct col1) distinct_count
+            , min(length(col1)) min_charlength
+            , max(length(col1)) max_charlength
+            , min(col1) alphabet_min
+            , max(col1) alphabet_max
+            , b.has_numbers_count
+            , c.has_letters_count
+            , d.has_decimals_count
+            , e.has_non_alphanumeric_characters_count
+            , f.decimal_datatype_count
+            , g.date_count
+            , h.dateformat
+            FROM table_data
+            FULL OUTER JOIN (
+                SELECT count(col1) null_count
+                FROM table_data
+                WHERE col1 is null or col1 LIKE '' or col1 LIKE ' '
+            ) a
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_numbers_count
+                FROM table_data
+                WHERE regexp_like(col1, '\d')=True
+            ) b
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_letters_count
+                FROM table_data
+                WHERE regexp_like(col1, '[A-Za-z]')=True
+            ) c
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_decimals_count
+                FROM table_data
+                WHERE regexp_like(col1, '\.')=True
+            ) d
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) has_non_alphanumeric_characters_count
+                FROM table_data
+                WHERE regexp_like(col1, '\!|\@|\#|\$|\%|\^|\&|\*
+                                        |\+|\-|\/|\\|\<|\>|\,|\.
+                                        |\?|\||\'|\"|\_|\|\')=True
+            ) e
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) decimal_datatype_count
+                FROM table_data
+                WHERE regexp_like(col1, '^\d+\.\d+')=True
+            ) f
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT count(col1) date_count
+                FROM table_data
+                WHERE regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s
+                                        |\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$
+                                        |\d{4}\-\d{2}\-\d{2}$
+                                        |\d{4}\-\d{1,2}\-\d{1,2}$
+                                        |\d{2}\-\d{2}\-\d{4}
+                                        |\d{1,2}\-\d{1,2}\-\d{4}
+                                        ||\d{4}\/\d{2}\/\d{2}$
+                                        |\d{4}\/\d{1,2}\/\d{1,2}$
+                                        |\d{2}\/\d{2}\/\d{4}
+                                        |\d{1,2}\/\d{1,2}\/\d{4}$
+                                        |^\d{8}$'
+                                        )=True
+            ) g
+            ON 1=1
+            FULL OUTER JOIN (
+                SELECT distinct
+                dateformat
+                , count(dateformat) format_count
+                FROM (
+                    SELECT
+                    col1
+                    , CASE 
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}\s')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm ZON'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}\:\d{2}\.\d{3}$')
+                        THEN 'yyyy-mm-dd hh:mm:ss.mmm'
+                    WHEN regexp_like(col1, '\d{4}\-\d{2}\-\d{2}$')
+                        THEN 'yyyy-mm-dd'
+                    WHEN regexp_like(col1, '\d{4}\-\d{1,2}\-\d{1,2}$')
+                        THEN 'yyyy-m-d'
+                    WHEN regexp_like(col1, '\d{2}\-\d{2}\-\d{4}')
+                        THEN 'mm-dd-yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\-\d{1,2}\-\d{4}')
+                        THEN 'm-d-yyyy'
+                    WHEN regexp_like(col1, '\d{4}\/\d{2}\/\d{2}$')
+                        THEN 'yyyy/mm/dd'
+                    WHEN regexp_like(col1, '\d{4}\/\d{1,2}\/\d{1,2}$')
+                        THEN 'yyyy/m/d'
+                    WHEN regexp_like(col1, '\d{2}\/\d{2}\/\d{4}')
+                        THEN 'mm/dd/yyyy'
+                    WHEN regexp_like(col1, '\d{1,2}\/\d{1,2}\/\d{4}$')
+                        THEN 'm/d/yyyy'
+                    WHEN regexp_like(col1, '^\d{8}$')
+                        THEN 'yyyymmdd'
+                    ELSE 'N/A' END as date_format
+                    FROM table_data
+                )
+                GROUP BY dateformat
+            ) h
+            ON 1=1
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+            GROUP BY 
+            a.null_count, b.has_numbers_count, c.has_letters_count
+            , d.has_decimals_count, e.has_non_alphanumeric_characters_count
+            , f.decimal_datatype_count, g.date_count, h.dateformat
+        ) a
+        FULL OUTER JOIN (
+            SELECT
+            max(try(cast(col1 as int))) numeric_max
+            , min(try(cast(col1 as int))) numeric_min
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) b
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(try(cast(col1 as decimal(18,2)))) decimal_max
+            , min(try(cast(col1 as decima(18,2)))) decimal_min
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) c
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'mm/dd/yyyy' OR 'm/d/yyyy' use:
+                            split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                            ) 
+                        as date)
+                    )
+                ) max_date1
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'/',3),'-',split_part(col1,'/',1),'-',split_part(col1,'/',2)
+                            )
+                        as date)
+                    )
+                ) min_date1
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) d
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'yyyy/mm/dd' OR 'yyyy/m/d' use:
+                            split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                            ) 
+                        as date)
+                    )
+                ) max_date2
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'/',1),'-',split_part(col1,'/',2),'-',split_part(col1,'/',3)
+                            )
+                        as date)
+                    )
+                ) min_date2
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) e
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        concat(
+                            --when data is formatted as 'mm-dd-yyyy' OR 'm-d-yyyy' use:
+                            split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                            ) 
+                        as date)
+                    )
+                ) max_date3
+            , min(
+                try(
+                    cast(
+                        concat(
+                            split_part(col1,'-',3),'-',split_part(col1,'-',1),'-',split_part(col1,'-',2)
+                            )
+                        as date)
+                    )
+                ) min_date3
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) f
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            max(
+                try(
+                    cast(
+                        --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                        col1
+                        as date)
+                    )
+                ) max_date4
+            , min(
+                try(
+                    cast(
+                        --when data is formatted as 'yyyy-mm-dd' OR 'yyyy-m-d' use:
+                        col1
+                        as date)
+                    )
+                ) min_date4
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) g
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT 
+            CASE WHEN substr(cast(A.max_int as varchar), 1, 2) in ('19','20') 
+                THEN CAST(A.max_date as varchar) 
+                ELSE 'N/A' END max_date5
+            , CASE WHEN substr(cast(A.min_int as varchar), 1, 2) in ('19','20')
+                THEN CAST(A.min_date as varchar)
+                ELSE 'N/A' END min_date5
+            FROM (
+                SELECT 
+                max(try(cast(col1 as int))) max_int
+                , min(try(cast(col1 as int))) min_int
+                , max(
+                    try(
+                        cast(
+                            concat(
+                                --when data is formatted as 'yyyymmdd' use:
+                                substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                                )
+                            as date)
+                        )
+                    ) max_date
+                , min(
+                    try(
+                        cast(
+                            concat(
+                                --when data is formatted as 'yyyymmdd' use:
+                                substr(col1, 1, 4),'-',substr(col1, 5, 2),'-', substr(col1, 7, 2)
+                                )
+                            as date)
+                        )
+                    ) min_date
+                FROM table_data
+                WHERE col1 is not null and col1 <> '' and col1 <> ' '
+            ) A
+        ) h
+        ON 1=1
+        FULL OUTER JOIN (
+            SELECT
+            --when data is formatted as 'yyyy-mm-dd 00:00:00.000 ZON' OR 'yyyy-mm-dd 00:00:00.000' use:
+            max(try(cast(col1 as date))) max_date6
+            , min(try(cast(col1 as date))) min_date6
+            FROM table_data
+            WHERE col1 is not null and col1 <> '' and col1 <> ' '
+        ) i
+        ON 1=1
+    ) a
+    JOIN metadata2 md 
+    on 1=1
+    WHERE md.temp_column_name = 'col1'
+)
+, col2_int as (
+    SELECT
+    md.table_name, md.column_name, md.ordinal_position, md.data_type, md.temp_column_name
+    , b.null_count, total_nonnull_count, distinct_count
+    , CASE WHEN total_nonnull_count > distinct_count then 'Y' ELSE 'N' END contains_duplicates
+    , 'N' contains_non_alphanumerics
+    , 'N' contains_letters
+    , min_charlength, max_charlength, alphabet_min, alphabet_max
+    , 'Y' contains_numbers
+    , 'Y' contains_only_numbers
+    , numeric_min, numeric_max
+    , 'N' contains_decimals
+    , 'N' decimal_datatype_flag
+    , 'N/A' decimal_max
+    , 'N/A' decimal_min
+    , 'N/A' date_flag
+    , 'N/A' date_form
+    , 'N/A' max_date
+    , 'N/A' min_date
+    FROM (
+        SELECT
+        count(col2) total_nonnull_count
+        , count(distinct col2) distinct_count
+        , min(length(cast(col2 as varchar))) min_charlength
+        , max(length(cast(col2 as varchar))) max_charlength
+        , min(cast(col2 as varchar)) alphabet_min
+        , max(cast(col2 as varchar)) alphabet_max
+        , cast(min(col2 as varchar)) numeric_min
+        , cast(max(col2 as varchar)) numeric_max
+        FROM table_data
+        WHERE col2 is not null and cast(col2 as varchar) <> '' and cast(col2 as varchar) <> ' '
+        )
+        FULL OUTER JOIN (
+        SELECT total_count-non_null_count null_count
+        FROM (
+            SELECT 
+            count(*) total_count
+            , a.non_null_count
+            FROM table_data
+            FULL OUTER JOIN (
+                SELECT count(col2) non_null_count
+                FROM table_data where regexp_like(cast(col2 as varchar), '\d')
+                ) a
+            ON 1=1
+            GROUP BY a.non_null_count
+            ) b
+        )
+        ON 1=1
+        FULL OUTER JOIN metadata2 md
+        ON 1=1
+        WHERE md.temp_column_name = 'col2'
+)
+, col3_dec as (
+    SELECT
+    md.table_name, md.column_name, md.ordinal_position, md.data_type, md.temp_column_name
+    , null_count, total_nonnull_count, distinct_count
+    , CASE when total_nonnull_count <> distinct_count THEN 'Y' ELSE 'N' end as contains_duplicates
+    , contains_non_alphanumerics, contains_letters
+    , min_charlength, max_charlength
+    , alphabet_min, alphabet_max
+    , contains_numbers, contains_only_numbers
+    , CASE 
+        WHEN numeric_max is null THEN split_part(cast(decimal_max as varchar),'.',1)
+        ELSE numeric_max END numeric_max
+    , CASE
+        WHEN numeric_min is null THEN split_part(cast(decimal_min as varchar),'.',1)
+        ELSE numeric_min END numeric_min
+    , contains_decimals, decimal_datatype_flag, decimal_max, decimal_min, date_flag, date_form
+    , max_date, min_date
+    FROM (
+        SELECT 
+        b.null_count
+        , count(col3) total_nonnull_count
+        , count(distinct col3) distinct_count
+        , 'Y' contains_non_alphanumerics
+        , length(min(try(cast(col3 as varchar)))) min_charlength
+        , length(max(try(cast(col3 as varchar)))) max_charlength
+        , min(try(cast(col3 as varchar))) alphabet_min
+        , max(try(cast(col3 as varchar))) alphabet_max
+        , 'Y' contains_numbers
+        , 'N' contains_only_numbers
+        , cast(max(try(cast(col3 as int))) as varchar) numeric_max
+        , cast(min(try(cast(col3 as int))) as varchar) numeric_min
+        , 'Y' contains_decimals
+        , 'Y' decimal_datatype_flag
+        , cast(max(col3) as varchar) decimal_max
+        , cast(min(col3) as varchar) decimal_min
+        , 'N' date_flag
+        , 'N/A' date_form
+        , 'N/A' max_date
+        , 'N/A' min_date
+
+        FROM table_data
+        FULL OUTER JOIN (
+            SELECT
+            total_count-non_null_count null_count
+            FROM (
+            SELECT
+            count(*) total_count
+            , a.non_null_count
+            FROM table_data
+            FULL OUTER JOIN (
+                SELECT
+                count(col3) non_null_count
+                FROM table_data
+                WHERE regexp_like(cast(col3 as varchar), '\d')
+                ) a
+            ON 1=1
+            WHERE col3 is not null and cast(col3 as varchar) <> '' and cast(col3 as varchar) <> ' '
+            GROUP BY a.non_null_count
+            ) b
+        )
+    )
+    JOIN metadata2 md 
+    ON 1=1
+    WHERE md.temp_column_name = 'col3'
+)
+, combined as (
+    SELECT * from col1_str
+    UNION SELECT * FROM col2_int
+    UNION SElECT * FORM col3_dec
+)
+SELECT * FROM combined ORDER BY ordinal_position
+
 ```
-# Step 10 : Arrange and Modify the Query to Suit Your Dataset
+Using the above, you can now construct your own QA queries to fit the datatypes and number of columns pertinent to your own dataset.
 
 # Limitations of This Query
+This query, obviously, requires many lines of code to perform relatively simple operations. The limitation this code is likely to run up against lies not with the amount of data it is being asked to process, but with the physical length of the code itself. 
 
-# Conclusions
+The maximum allowed query string length is 262144 bytes, (which translateds to roughly 131,072 words), where the strings are encoded in UTF-8.
+
+[Click here to read more about AWS Query Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html).
+
+# How To Use This Query
+
