@@ -122,7 +122,7 @@ If you're looking at a dataset for the first time and don't want to go to the tr
 # Step 3 : Rename Your Table and Columns to Make Your Query Universally Applicable
 I know we just went through a whole rigamarole about naming our columns appropriately, but I want to take a minute to highlight the importance of writing a QA script that can be used not just on our example data, but on ANY dataset we might encounter. If we can utilize placeholder column names&mdash;and better yet, placeholder *table* names&mdash; in our QA script, we might be able to apply the same code to alot of different datasets by making very minor adjustments instead of having to update all our column names and table names to match whatever dataset we happen to be working with. 
 
-Let's make our code universally applicable by retitling our 'top_spotify_songs_2023_table' table to **'table_name'**. At the same time, let's retitle all our columns to column number alphanumerics like **'col1', 'col2', 'col3'**, etc. Athena will allow us to do both of these things using a simple ```WITH``` statement that specifies our new table name as well as existing or new column names:
+Let's make our code universally applicable by retitling our top_spotify_songs_2023_table' table to **'table_name'**. At the same time, let's retitle all our columns to column number alphanumerics like **'col1', 'col2', 'col3'**, etc. Athena will allow us to do both of these things using a simple ```WITH``` statement that specifies our new table name as well as existing or new column names:
 
 ```
 WITH table_data (
@@ -130,7 +130,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 ```
 The only thing to keep in mind here is that the number of columns you're specifying in the parentheses after your new table name must align with the number of columns that are actually being returned in your ```SELECT``` statement. In this case, we have 24 columns and we don't want to drop any of them, so we're renaming all 24.
@@ -185,7 +185,7 @@ table_name
 , data_type
 FROM information_schema.columns
 WHERE table_schema = 'default'
-and table_name = 'top_spotify_songs_2023_table'
+and table_name = top_spotify_songs_2023_table'
 order by ordinal_position
 ```
 The output of this query should resemble the following:
@@ -226,7 +226,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 count(col1) null_count 
@@ -249,7 +249,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 count(col1) total_nonnull_count
@@ -282,7 +282,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 a.total_nonnull_count
@@ -320,7 +320,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 CASE WHEN non_alphanumeric_count > 0 THEN 'Y' ELSE 'N' END contains_non_alphanumerics
@@ -343,7 +343,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 CASE WHEN contains_letters_count > 0 THEN 'Y' ELSE 'N' END contains_letters
@@ -366,7 +366,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 min(char_length) min_charlength
@@ -395,7 +395,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 min(col1) alphabetical_min
@@ -416,7 +416,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 CASE WHEN contains_numbers_count > 0 THEN 'Y' ELSE 'N' END contains_numbers
@@ -433,14 +433,14 @@ The output of the above should resemble the following:
 | Y                    |
 
 ### 4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
-For this flag we can 
+For this flag we can utilize some of the flags we've already created. If our contains_numbers flag is 'Y' and our contains_letters flag is 'N' and our contains_non_alphanumerics flag is also 'N' then it's likely that our column contains only numbers. If a column returns a 'Y' for this field, it's likely that the column could be recast as an integer datatype. 
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 CASE WHEN a.contains_numbers = 'Y'
@@ -477,14 +477,24 @@ FULL OUTER JOIN (
     ) c
     ON 1=1
 ```
+The output of the above should resemble the following:
+
+| **contains_only_numbers** |
+|---------------------------|
+| N                         |
+
 ### 4k. Get the Numeric Minimum and Maximum Value of the Data in the Column's Non-Null Entries, If Applicable
+For this metric, we want to find the maximum and minimum values of the column only if the column contains numeric data; in other words, what is the maximum and minumum value of the data if it were cast to an integer datatype. For columns like the first column in our dataset that are primarily alphanumeric, the attempt to cast any of the values to an integer datatype is going to fail. This is why we use the ```try()``` function in the code below. If the data cannot be cast to an integer datatype, the ```try()``` function will merely return a NULL value, rather than erroring out.
+
+Additionally, because this metric may not apply to all the columns (as it doesn't to the first column of our dataset), we want to recast the minimum and maximum values as varchars in our ```CASE``` statement so that, in the case that the value is null, we can return 'N/A' as the query result. In Athena, CASE statements connot return values belonging to different datatypes; if 'N/A' is among the possible returns, then any other value that is returned must also be a varchar.
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 CASE WHEN B.contains_only_numbers = 'Y' THEN cast(A.numeric_max as varchar) ELSE 'N/A' END numeric_max
@@ -534,15 +544,22 @@ FULL OUTER JOIN (
 ) B
 ON 1=1
 ```
+The output of the above should resemble the following:
+
+| **numeric_max** | **numeric_min** |
+|-----------------|-----------------|
+| N/A             | N/A             |
+
 ### 4l. Create a Flag to Indicate Whether the Column Data Contains Decimals
-While this information would already be caught by the flag we created to locate non-alphanumeric characters, isolating the decimal from other non-alphanumerics can be useful for determining whether the data found in this column could potentially be classified as a decimal datatype.
+While this information would already be caught by the flag we created to locate non-alphanumeric characters, isolating the decimal from other non-alphanumerics can be useful for determining whether the data found in this column could potentially be re-classified as a decimal datatype.
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 CASE WHEN decimal_count > 0 THEN 'Y' ELSE 'N' END contains_decimals
@@ -553,14 +570,22 @@ FROM (
     WHERE regexp_like(col1, '\.')=True
 ) 
 ```
+The output of the above should resemble the following:
+
+| **contains_decimals** | 
+|-----------------------|
+| Y                     |
+
 ### 4m. Create a Flag to Indicate Whether the Column Data Could Be Cast as a Decimal DataType
+As we can see from the previous flag, the fact that a column contains decimals is not enough information to determine whether the column could be recast as a decimal datatype. For the latter to be plausible, we need to confirm that decimals are present in every non-null datarow. The following code achieves this:
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 CASE WHEN b.decimal_count = a.distinct_count THEN 'Y' ELSE 'N' END decimal_datatype_flag 
@@ -578,6 +603,12 @@ FULL OUTER JOIN (
 ) b
 ON 1=1
 ```
+The output of the above should resemble the following:
+
+| **decimal_datatype_flag** | 
+|---------------------------|
+| N                         |
+
 ### 4n. Get the Minimum and Maximum Value of the Data, Cast as Decimals, in the Column's Non-Null Entries, If Applicable
 ```
 WITH table_data (
@@ -585,7 +616,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 CASE WHEN decimal_max is not null then cast(decimal_max as varchar) else 'N/A' end decimal_max
@@ -598,14 +629,21 @@ FROM (
     WHERE col1 is not null and col1 <> '' and col1 <> ' '
 )
 ```
+The output of the above should resemble the following:
+
+| **decimal_max** | **decimal_min** | 
+|-----------------|-----------------|
+| N/A             | N/A             |
+
 ### 4o. Create an Indicator to Describe the Format of the Date, If Applicable
+To capture data that could be intended as dates (numerically speaking), we want to consider all the ways dates could be written.
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 b.date_format as date_format_indicator
@@ -646,6 +684,11 @@ FROM (
     GROUP BY a.date_format
 ) b
 ```
+The output of the above should resemble the following:
+
+| **date_format_indicator** | 
+|---------------------------|
+| N/A                       |
 
 ### 4p. Create a Flag to Indicate Whether the Column Data Could Be Interpreted as a Date
 
@@ -655,7 +698,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT 
 CASE WHEN e.date_flag <> 'N/A' THEN 'Y' ELSE 'N' END date_flag
@@ -715,6 +758,12 @@ FROM (
     ) d
 ) e
 ```
+The output of the above should resemble the following:
+
+| **date_flag** | 
+|---------------|
+| N/A           |
+
 ### 4q. Get the Minimum and Maximum Value of the Data, Interpreted as a Date DataType, If Applicable
 ```
 WITH table_data (
@@ -722,7 +771,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 SELECT
 CASE 
@@ -960,6 +1009,12 @@ FROM (
     ) h
 ) i
 ```
+The output of the above should resemble the following:
+
+| **max_date** | **min_date** | 
+|--------------|--------------|
+| N/A          | N/A          |
+
 # Step 5 : Tie all the Queries From Step 4 Together Into a Single Continuous Query ('col1') That Will Perform All of the QA Procedures Outlined in Step 4 on A Single Column of Your Table's Data
 
 ```
@@ -968,7 +1023,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 , metadata as (
     SELECT distinct
@@ -1330,6 +1385,32 @@ SELECT * FROM col1_str
 )
 SELECT * FROM combined ORDER BY ordinal_position;
 ```
+The output of the above should resemble the following:
+
+| **table_name**                 | **column_name**          | **ordinal_position** | **data_type** |
+|--------------------------------|--------------------------|----------------------|---------------|
+| top_spotify_songs_20203_table  | track_name               | 1                    | varchar       |
+
+| **temp_column_name** | **null_count** | **total_nonnull_count** | **distinct_count** | **contains_duplicates** |
+|----------------------|----------------|-------------------------|--------------------|-------------------------|
+| col1                 | 0              | 953                     | 943                | Y                       |
+
+| **contains_non_alphanumerics** | **contains_letters** | **min_charlength** | **max_charlength** |
+|--------------------------------|----------------------|--------------------|--------------------|
+| Y                              | Y                    | 2                  | 123                |
+
+| **alphabetical_min** | **alphabetical_max** | **contains_numbers** | **contains_only_numbers** |
+|----------------------|----------------------|----------------------|---------------------------|
+| 10:35                | ZOOM                 | Y                    | N                         |
+
+| **numeric_max** | **numeric_min** | **contains_decimals** | **decimal_datatype_flag** |
+|-----------------|-----------------|-----------------------|---------------------------|
+| N/A             | N/A             | Y                     | N                         |
+
+| **decimal_max** | **decimal_min** | **date_format_indicator** | **date_flag** | **max_date** | **min_date** |
+|-----------------|-----------------|---------------------------|---------------|--------------|--------------|
+| N/A             | N/A             | N/A                       | N/A           | N/A          | N/A
+
 # Step 6 : Duplicate The Col1 Query from Step 5 For the First 10 Columns of Your Table
 To duplicate the Col1 script to be applicable to additonal columns, I recommend copying and pasting the above query into a new query window in your Athena query editor. Once there, you can change the 'col1' variable to 'col2' everywhere it appears in the query using Athena's FIND & REPLACE function. To summon the FIND & REPLACE menu, click anywhere in the query editor window and hit 'Ctrl + F' to open the FIND & REPLACE window. Once open, you can select the '+' sign to open the 'REPLACE' window. Enter 'col1' in the FIND searchbar and 'col2' in the REPLACE WITH bar and select 'REPLACE ALL'.
 
@@ -1345,7 +1426,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 , metadata as (
     SELECT distinct
@@ -1355,7 +1436,7 @@ WITH table_data (
     , data_type
     FROM information_schema.columns
     WHERE table_schema='default'
-    AND table_name = 'top_spotify_songs_2023_table'
+    AND table_name = top_spotify_songs_2023_table'
     ORDER BY ordinal_position
 )
 , metadata2 as (
@@ -1404,7 +1485,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 , metadata as (
     SELECT distinct
@@ -1414,7 +1495,7 @@ WITH table_data (
     , data_type
     FROM information_schema.columns
     WHERE table_schema='default'
-    AND table_name = 'top_spotify_songs_2023_table'
+    AND table_name = top_spotify_songs_2023_table'
     ORDER BY ordinal_position
 )
 , metadata2 as (
@@ -1483,7 +1564,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 , metadata as (
     SELECT distinct
@@ -1493,7 +1574,7 @@ WITH table_data (
     , data_type
     FROM information_schema.columns
     WHERE table_schema='default'
-    AND table_name = 'top_spotify_songs_2023_table'
+    AND table_name = top_spotify_songs_2023_table'
     ORDER BY ordinal_position
 )
 , metadata2 as (
@@ -1577,7 +1658,7 @@ WITH table_data (
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
     col21, col22, col23, col24
     ) as (
-        SELECT * FROM 'top_spotify_songs_2023_table
+        SELECT * FROM top_spotify_songs_2023_table
         )
 , metadata as (
     SELECT distinct
@@ -1587,7 +1668,7 @@ WITH table_data (
     , data_type
     FROM information_schema.columns
     WHERE table_schema='default'
-    AND table_name = 'top_spotify_songs_2023_table'
+    AND table_name = top_spotify_songs_2023_table'
     ORDER BY ordinal_position
 )
 , metadata2 as (
