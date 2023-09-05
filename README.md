@@ -1419,7 +1419,6 @@ Once the 'col1' variable has been replaced with 'col2', highlight the entire scr
 Repeat the above process until your query resembles the code below:
 
 > NOTE: The code below will not actually run if copied and pasted into your query editor. The lines of code that begin with 'col' names are meant to represent the structure of what your code should look like. They are written this way to conserve space in this repository.
-V V V V V
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
@@ -1468,13 +1467,13 @@ WITH table_data (
 )
 Select * from combined ORDER BY ordinal_position;
 ```
-At this point you may be wondering why we've only opted to query the first 10 columns of our data? Why not do all 28 columns at once?
+At this point you may be wondering why we've only opted to query the first 10 columns of our data? Why not do all 24 columns at once?
 
 The reason is becuase of Athena's query limitations. The maximum allowed query string length is 262144 bytes, where the strings are encoded in UTF-8.
 
 When our col1 Query from STEP 5 is copied ten times, our code exceeds 152,000 characters and occupies nearly 3600 lines of code. Athena can handle this amount, but try much more and you may get an error message.
 
-To query all 28 columns of our dataset, my recommendation would be to write two separate queries: the first querying columns #1-14, the second querying columns #15-28. Depending on the size of your dataset, this amount may have to change. Anecdotally, I'll share that I've been successful querying up to 10 columns at a time from datasets that contain upwards of 17 million records.
+To query all 24 columns of our dataset, my recommendation would be to write two separate queries: the first querying columns #1-14, the second querying columns #15-28. Depending on the size of your dataset, this amount may have to change. Anecdotally, I'll share that I've been successful querying up to 10 columns at a time from datasets that contain upwards of 17 million records.
 
 [Click here to read more about AWS Query Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html).
 
