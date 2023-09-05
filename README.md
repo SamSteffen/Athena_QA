@@ -433,6 +433,7 @@ The output of the above should resemble the following:
 | Y                    |
 
 ### 4j. Create a Flag to Indicate Whether the Column Data Contains ONLY Numbers
+For this flag we can 
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
