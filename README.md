@@ -2,7 +2,9 @@
 ### Introduction
 Quality Assurance (QA) is an important part of any analyst's job. Whether you're just trying to get a high-level sense of what a dataset contains, looking for potential problems in preparing a dataset to be dashboard-ready, or aiming to explore the finer granularity of a dataset's various cross-sections and subsets, you're probably going to need to know your way around some query language to get there. 
 
-The purpose of this repository is to show how one might go about using Amazon Web Service's (AWS) interactive query service (a.k.a. Athena) to perform QA or User Acceptance Testing (UAT) of ten columns of any given table or dataset using a single executable query. "Why ten?" you ask? "Why not *all*?" The reason our QA procedure cannot perform QA of a table containing more than 10 columns has to do with the length of the query we'll be crafting, that will push upon the boundaries of what Athena is capable of handling. But fear not--there's no reason we can't duplicate the query once it's written and use it, or slightly varied versions thereof, to query an entire dataset, containing as many columns as you care to throw at it.
+The purpose of this repository is to show how one might go about using Amazon Web Service's (AWS) interactive query service (a.k.a. Athena) to perform QA or User Acceptance Testing (UAT) of ten columns of any given table or dataset using a single executable query. 
+
+"Why ten?" you ask? "Why not *all*?" The reason our QA procedure cannot perform QA of a table containing more than 10 columns has to do with the length of the query we'll be crafting, that will push upon the boundaries of what Athena is capable of handling. But fear not&mdash;there's no reason we can't duplicate the query once it's written and use it, or slightly varied versions of it, to query an entire dataset, containing as many columns as you care to throw at it.
 
 The intention of creating this repository is also to show and explain a few other tips and tricks that may come in handy along the way, as a means of hopefully helping you get up to speed on how to make AWS, S3, and Athena work for you. 
 
@@ -1419,6 +1421,12 @@ Once the 'col1' variable has been replaced with 'col2', highlight the entire scr
 Repeat the above process until your query resembles the code below:
 
 > NOTE: The code below will not actually run if copied and pasted into your query editor. The lines of code that begin with 'col' names are meant to represent the structure of what your code should look like. They are written this way to conserve space in this repository.
+
+For a full rendering of the usable script, see the attached files:
+- QA_Query_strings_col1-col10.sql
+- QA_Query_strings_col11-col20.sql
+- QA_Query_strings_col21-col30.sql
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
@@ -1478,6 +1486,12 @@ To query all 24 columns of our dataset, my recommendation would be to write two 
 [Click here to read more about AWS Query Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html).
 
 # Step 7 : Rewrite the Col1_str() Query From Step 5 To Handle Integer Datatypes
+Part of the reason for creating some of the flags in our QA is to help us determine the appropriateness of the datatype for the data we're calling in to Athena. Calling in everything as string as we did in the example above allows us some flexibility in interpretation of our data, but it might behoove us to modify that in future iterations of QA. 
+
+Say that after running our QA, we discover a column that is all numeric and could be called in as an 'integer' datatype rather than a string. We can return to our ```CREATE TABLE``` script from **Step 2** and change the datatype from 'string' to 'integer' in the script. Piece of cake! 
+
+But then what if, after determining that this column should be an integer, we want to QA it? The way we've written our Col1 QA query, it can only work if the data it's given is a string. Let's rewrite the code to handle additional datatypes, beginning with integers:
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
@@ -1557,6 +1571,8 @@ FROM (
 SELECT * FROM col2_int
 ```
 # Step 8 : Rewrite the Col1_str Query From Step 5 To Handle Decimal Datatypes
+Let's repeat Step 7, to rewrite our Col1 Query to handle another type of data: decimals.
+
 ```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
@@ -1667,7 +1683,7 @@ WITH table_data (
     , data_type
     FROM information_schema.columns
     WHERE table_schema='default'
-    AND table_name = top_spotify_songs_2023_table'
+    AND table_name = 'top_spotify_songs_2023_table'
     ORDER BY ordinal_position
 )
 , metadata2 as (
@@ -2149,4 +2165,54 @@ The maximum allowed query string length is 262144 bytes, (which translateds to r
 [Click here to read more about AWS Query Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html).
 
 # How To Use This Query
+Now that you have the bones of a QA query, you can use these tools to perform a somewhat complex QA of almost any dataset. We've written it in such a way that making modifications to suit a dataset other than our example should be easy to achieve with very minor tweaks. To modify this code to suit another dataset, just be sure to make the following adjustments:
 
+### Adjustment 1 : Modify the number of columns in the script's opening ```WITH`` statement
+Recall that the number of columns in our ```WITH``` statement has to match the number of columns in the ```select``` statement
+
+WITH table_data (
+    **col1, col2, col3, col4, col5, col6, col7, col8, col9, col10,** 
+    **col11, col12, col13, col14, col15, col16, col17, col18, col19, col20,** 
+    **col21, col22, col23, col24**
+    ) as (
+        **SELECT *** FROM top_spotify_songs_2023_table
+        )
+
+In the sample data we used for this tutorial, there were 24 columns, so we listed 24 columns. For a dataset containing more than 24 columns, you would need to add to this list. Likewise, for a table containing fewer columns you could delete column designations to match those of the data you're working with.
+
+Keep in mind that the number of columns is also going to dictate how many 'col' queries you will need to use to QA your data. Again, I'd recommend breaking your query up into batches of 10 columns per query, and saving the queries as such so that you can use them for future QA.
+
+### Adjustment 2 : Change the source table in the script's opening ```WITH``` statement
+This adjustment also takes place right at the tippy top of the script:
+
+WITH table_data (
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
+    col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
+    col21, col22, col23, col24
+    ) as (
+        SELECT * FROM **top_spotify_songs_2023_table**
+        )
+
+Just make sure you change the table name here to whatever you've decided to call your table when you ingested it into Athena in your ```CREATE TABLE``` script.
+
+### Adjustment 3 : Change the source table in the script's first ```metadata``` query
+The name of your table also makes an appearance in the query's second ```WITH``` statement, the one we've titled 'metadata.' Be sure that you change the name of your table here as well (but keep the single quotations).
+
+, metadata as (
+    SELECT distinct
+    table_name
+    , column_name
+    , ordinal_position
+    , data_type
+    FROM information_schema.columns
+    WHERE table_schema='default'
+    AND table_name = '**top_spotify_songs_2023_table**'
+    ORDER BY ordinal_position
+)
+
+### Adjustment 4 : Add the appropriate number and type of query segments to the body of your QA query
+Whether your columns are all strings, or some combination of strings, integers or decimals, you just need to align these with the data you have in hand. 
+
+The rest is up to you!
+
+Happy coding.
