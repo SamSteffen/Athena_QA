@@ -2167,9 +2167,10 @@ The maximum allowed query string length is 262144 bytes, (which translateds to r
 # How To Use This Query
 Now that you have the bones of a QA query, you can use these tools to perform a somewhat complex QA of almost any dataset. We've written it in such a way that making modifications to suit a dataset other than our example should be easy to achieve with very minor tweaks. To modify this code to suit another dataset, just be sure to make the following adjustments:
 
-### Adjustment 1 : Modify the number of columns in the script's opening ```WITH`` statement
+### Adjustment 1 : Modify the number of columns in the script's opening ```WITH``` statement
 Recall that the number of columns in our ```WITH``` statement has to match the number of columns in the ```select``` statement
 
+```
 WITH table_data (
     **col1, col2, col3, col4, col5, col6, col7, col8, col9, col10,** 
     **col11, col12, col13, col14, col15, col16, col17, col18, col19, col20,** 
@@ -2177,7 +2178,7 @@ WITH table_data (
     ) as (
         **SELECT *** FROM top_spotify_songs_2023_table
         )
-
+```
 In the sample data we used for this tutorial, there were 24 columns, so we listed 24 columns. For a dataset containing more than 24 columns, you would need to add to this list. Likewise, for a table containing fewer columns you could delete column designations to match those of the data you're working with.
 
 Keep in mind that the number of columns is also going to dictate how many 'col' queries you will need to use to QA your data. Again, I'd recommend breaking your query up into batches of 10 columns per query, and saving the queries as such so that you can use them for future QA.
@@ -2185,6 +2186,7 @@ Keep in mind that the number of columns is also going to dictate how many 'col' 
 ### Adjustment 2 : Change the source table in the script's opening ```WITH``` statement
 This adjustment also takes place right at the tippy top of the script:
 
+```
 WITH table_data (
     col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, 
     col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, 
@@ -2192,12 +2194,13 @@ WITH table_data (
     ) as (
         SELECT * FROM **top_spotify_songs_2023_table**
         )
+```
 
 Just make sure you change the table name here to whatever you've decided to call your table when you ingested it into Athena in your ```CREATE TABLE``` script.
 
 ### Adjustment 3 : Change the source table in the script's first ```metadata``` query
 The name of your table also makes an appearance in the query's second ```WITH``` statement, the one we've titled 'metadata.' Be sure that you change the name of your table here as well (but keep the single quotations).
-
+```
 , metadata as (
     SELECT distinct
     table_name
@@ -2209,7 +2212,7 @@ The name of your table also makes an appearance in the query's second ```WITH```
     AND table_name = '**top_spotify_songs_2023_table**'
     ORDER BY ordinal_position
 )
-
+```
 ### Adjustment 4 : Add the appropriate number and type of query segments to the body of your QA query
 Whether your columns are all strings, or some combination of strings, integers or decimals, you just need to align these with the data you have in hand. 
 
